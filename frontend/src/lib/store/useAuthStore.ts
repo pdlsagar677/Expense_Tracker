@@ -1,5 +1,6 @@
 // lib/store/useAuthStore.ts
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import API from "@/lib/services/api"; 
 
 interface User {
@@ -30,11 +31,12 @@ interface AuthStore {
   isAuthenticated: boolean;
   isCheckingAuth: boolean;
   message: string | null;
+  hasCheckedAuth: boolean; // Add this to track if auth has been checked
 
-  signup: (signupData: SignupData) => Promise<any>; // Changed return type
+  signup: (signupData: SignupData) => Promise<any>;
   login: (email: string, password: string) => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
-  resendVerification: (email: string) => Promise<void>; // Added
+  resendVerification: (email: string) => Promise<void>;
   checkAuth: () => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -43,191 +45,215 @@ interface AuthStore {
   clearMessage: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  isLoading: false,
-  error: null,
-  isAuthenticated: false,
-  isCheckingAuth: true,
-  message: null,
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      isLoading: false,
+      error: null,
+      isAuthenticated: false,
+      isCheckingAuth: false,
+      message: null,
+      hasCheckedAuth: false, // Initialize as false
 
-  signup: async (signupData: SignupData) => {
-    set({ isLoading: true, error: null, message: null });
-    try {
-      console.log("📤 Sending signup request with data:", signupData);
-      
-      const { data } = await API.post("/auth/signup", signupData);
-      
-      console.log("✅ Signup successful, response:", data);
-      
-      set({ 
-        isLoading: false, 
-        user: data.user,
-        message: data.message || "Signup successful! Please verify your email.",
-        isAuthenticated: false 
-      });
-      
-      return data; 
-      
-    } catch (err: any) {
-      console.error("❌ Signup failed with error:", err);
-      
-      if (err.response) {
-        console.error("Response data:", err.response.data);
-        console.error("Response status:", err.response.status);
-      }
-      
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          err.message || 
-                          "Signup failed. Please try again.";
-      
-      set({ 
-        isLoading: false, 
-        error: errorMessage
-      });
-      
-      throw err;
+      signup: async (signupData: SignupData) => {
+        set({ isLoading: true, error: null, message: null });
+        try {
+          const { data } = await API.post("/auth/signup", signupData);
+          
+          set({ 
+            isLoading: false, 
+            user: data.user,
+            message: data.message || "Signup successful! Please verify your email.",
+            isAuthenticated: false,
+            hasCheckedAuth: true
+          });
+          
+          return data; 
+          
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 
+                              err.response?.data?.error || 
+                              err.message || 
+                              "Signup failed. Please try again.";
+          
+          set({ 
+            isLoading: false, 
+            error: errorMessage,
+            hasCheckedAuth: true
+          });
+          
+          throw err;
+        }
+      },
+
+      verifyEmail: async (code: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.post("/auth/verify-email", { code });
+          set({ 
+            isLoading: false, 
+            isAuthenticated: true, 
+            user: data.user,
+            message: data.message || "Email verified successfully!",
+            hasCheckedAuth: true
+          });
+          return data;
+        } catch (err: any) {
+          set({ 
+            isLoading: false, 
+            error: err.response?.data?.message || err.message || "Email verification failed",
+            hasCheckedAuth: true
+          });
+          throw err;
+        }
+      },
+
+      resendVerification: async (email: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.post("/auth/resend-verification", { email });
+          set({ 
+            isLoading: false, 
+            message: data.message || "New verification code sent to your email!",
+            hasCheckedAuth: true
+          });
+          return data;
+        } catch (err: any) {
+          set({ 
+            isLoading: false, 
+            error: err.response?.data?.message || err.message || "Failed to resend verification code",
+            hasCheckedAuth: true
+          });
+          throw err;
+        }
+      },
+
+      login: async (email: string, password: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.post("/auth/login", { email, password });
+          set({ 
+            isLoading: false, 
+            isAuthenticated: true, 
+            user: data.user,
+            message: data.message,
+            hasCheckedAuth: true
+          });
+        } catch (err: any) {
+          set({ 
+            isLoading: false, 
+            error: err.response?.data?.message || err.message || "Login failed",
+            hasCheckedAuth: true
+          });
+          throw err;
+        }
+      },
+
+      checkAuth: async () => {
+        const state = get();
+        // Don't check if already checking or already checked
+        if (state.isCheckingAuth || state.hasCheckedAuth) {
+          return;
+        }
+        
+        set({ isCheckingAuth: true, error: null });
+        try {
+          const { data } = await API.get("/auth/check-auth");
+          if (data.user) {
+            set({ 
+              isAuthenticated: true, 
+              user: data.user, 
+              isCheckingAuth: false,
+              hasCheckedAuth: true
+            });
+          } else {
+            set({ 
+              isAuthenticated: false, 
+              user: null, 
+              isCheckingAuth: false,
+              hasCheckedAuth: true
+            });
+          }
+        } catch (err) {
+          set({ 
+            isAuthenticated: false, 
+            user: null, 
+            isCheckingAuth: false,
+            hasCheckedAuth: true
+          });
+        }
+      },
+
+      logout: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          await API.post("/auth/logout");
+          set({ 
+            isLoading: false, 
+            isAuthenticated: false, 
+            user: null,
+            message: "Logged out successfully",
+            hasCheckedAuth: false // Reset this on logout
+          });
+        } catch (err: any) {
+          set({ 
+            isLoading: false, 
+            error: err.response?.data?.message || err.message || "Logout failed",
+            hasCheckedAuth: true
+          });
+          throw err;
+        }
+      },
+
+      forgotPassword: async (email: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.post("/auth/forgot-password", { email });
+          set({ 
+            isLoading: false, 
+            message: data.message || "Password reset email sent successfully!",
+            hasCheckedAuth: true
+          });
+        } catch (err: any) {
+          set({ 
+            isLoading: false, 
+            error: err.response?.data?.message || err.message || "Failed to send reset email",
+            hasCheckedAuth: true
+          });
+          throw err;
+        }
+      },
+
+      resetPassword: async (token: string, password: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.post(`/auth/reset-password/${token}`, { password });
+          set({ 
+            isLoading: false, 
+            message: data.message || "Password reset successfully!",
+            hasCheckedAuth: true
+          });
+        } catch (err: any) {
+          set({ 
+            isLoading: false, 
+            error: err.response?.data?.message || err.message || "Password reset failed",
+            hasCheckedAuth: true
+          });
+          throw err;
+        }
+      },
+
+      clearError: () => set({ error: null }),
+      clearMessage: () => set({ message: null }),
+    }),
+    {
+      name: "auth-storage", // name of the item in storage
+      partialize: (state) => ({ 
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        hasCheckedAuth: state.hasCheckedAuth
+      }), // persist only these fields
     }
-  },
-
-  verifyEmail: async (code: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data } = await API.post("/auth/verify-email", { code });
-      set({ 
-        isLoading: false, 
-        isAuthenticated: true, 
-        user: data.user,
-        message: data.message || "Email verified successfully!"
-      });
-      return data; // Return data for potential use
-    } catch (err: any) {
-      set({ 
-        isLoading: false, 
-        error: err.response?.data?.message || err.message || "Email verification failed" 
-      });
-      throw err;
-    }
-  },
-
-  // Add this function for resending verification code
-  resendVerification: async (email: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data } = await API.post("/auth/resend-verification", { email });
-      set({ 
-        isLoading: false, 
-        message: data.message || "New verification code sent to your email!"
-      });
-      return data;
-    } catch (err: any) {
-      set({ 
-        isLoading: false, 
-        error: err.response?.data?.message || err.message || "Failed to resend verification code" 
-      });
-      throw err;
-    }
-  },
-
-  login: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data } = await API.post("/auth/login", { email, password });
-      set({ 
-        isLoading: false, 
-        isAuthenticated: true, 
-        user: data.user,
-        message: data.message
-      });
-    } catch (err: any) {
-      set({ 
-        isLoading: false, 
-        error: err.response?.data?.message || err.message || "Login failed" 
-      });
-      throw err;
-    }
-  },
-
-  checkAuth: async () => {
-    set({ isCheckingAuth: true, error: null });
-    try {
-      const { data } = await API.get("/auth/check-auth");
-      if (data.user) {
-        set({ 
-          isAuthenticated: true, 
-          user: data.user, 
-          isCheckingAuth: false 
-        });
-      } else {
-        set({ 
-          isAuthenticated: false, 
-          user: null, 
-          isCheckingAuth: false 
-        });
-      }
-    } catch (err) {
-      set({ 
-        isAuthenticated: false, 
-        user: null, 
-        isCheckingAuth: false 
-      });
-    }
-  },
-
-  logout: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      await API.post("/auth/logout");
-      set({ 
-        isLoading: false, 
-        isAuthenticated: false, 
-        user: null,
-        message: "Logged out successfully"
-      });
-    } catch (err: any) {
-      set({ 
-        isLoading: false, 
-        error: err.response?.data?.message || err.message || "Logout failed" 
-      });
-      throw err;
-    }
-  },
-
-  forgotPassword: async (email: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data } = await API.post("/auth/forgot-password", { email });
-      set({ 
-        isLoading: false, 
-        message: data.message || "Password reset email sent successfully!"
-      });
-    } catch (err: any) {
-      set({ 
-        isLoading: false, 
-        error: err.response?.data?.message || err.message || "Failed to send reset email" 
-      });
-      throw err;
-    }
-  },
-
-  resetPassword: async (token: string, password: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data } = await API.post(`/auth/reset-password/${token}`, { password });
-      set({ 
-        isLoading: false, 
-        message: data.message || "Password reset successfully!"
-      });
-    } catch (err: any) {
-      set({ 
-        isLoading: false, 
-        error: err.response?.data?.message || err.message || "Password reset failed" 
-      });
-      throw err;
-    }
-  },
-
-  clearError: () => set({ error: null }),
-  clearMessage: () => set({ message: null }),
-}));
+  )
+);
