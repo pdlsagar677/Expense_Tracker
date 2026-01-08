@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./src/routes/auth-route.js";
+import salaryRoutes from "./src/routes/salary-route.js"
 import { connectToDatabase } from "./src/database/connectionToDatabase.js";
 
 const app = express();
@@ -21,10 +22,11 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ single DB connection
 await connectToDatabase();
 
 app.use("/api/auth", authRoutes);
+app.use("/api/salary", salaryRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
