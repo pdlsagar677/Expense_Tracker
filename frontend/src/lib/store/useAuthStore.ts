@@ -185,26 +185,29 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      logout: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          await API.post("/auth/logout");
-          set({ 
-            isLoading: false, 
-            isAuthenticated: false, 
-            user: null,
-            message: "Logged out successfully",
-            hasCheckedAuth: false // Reset this on logout
-          });
-        } catch (err: any) {
-          set({ 
-            isLoading: false, 
-            error: err.response?.data?.message || err.message || "Logout failed",
-            hasCheckedAuth: true
-          });
-          throw err;
-        }
-      },
+     logout: async () => {
+  set({ isLoading: true, error: null });
+
+  try {
+    await API.post("/auth/logout", {}, { withCredentials: true });
+
+    set({
+      user: null,
+      isAuthenticated: false,
+      message: "Logged out successfully",
+      isLoading: false,
+      hasCheckedAuth: true  // keep true to allow redirect
+    });
+
+  } catch (err: any) {
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Logout failed",
+      hasCheckedAuth: true
+    });
+  }
+},
+
 
       forgotPassword: async (email: string) => {
         set({ isLoading: true, error: null });

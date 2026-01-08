@@ -179,15 +179,31 @@ export const checkAuth = async (req, res) => {
  */
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production"
+    });
 
-    return res.status(200).json({ success: true, message: "Logged out successfully" });
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production"
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully"
+    });
   } catch (error) {
     console.error("Logout error:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
   }
 };
+
 
 /**
  * FORGOT PASSWORD
