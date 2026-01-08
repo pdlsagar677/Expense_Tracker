@@ -2,7 +2,7 @@
 import { Salary } from "../model/salary.js";
 import { format } from "date-fns";
 
-// Add or update salary
+// Add income (accumulate model)
 export const addOrUpdateSalary = async (req, res) => {
   try {
     const { amount, month, notes } = req.body;
@@ -12,23 +12,23 @@ export const addOrUpdateSalary = async (req, res) => {
       return res.status(400).json({ success: false, message: "Amount and month are required" });
     }
 
-    // Check if salary already exists for this month
     let salary = await Salary.findOne({ user: userId, month });
 
     if (!salary) {
-      // Create new salary for the month
+      // First income of month
       salary = await Salary.create({
         user: userId,
         month,
         salaryAmount: amount,
         remainingSalary: amount,
         expenses: [],
+        notes,
       });
     } else {
-      // Update salary amount and adjust remainingSalary
-      const expenseTotal = salary.expenses.reduce((sum, exp) => sum + exp.amount, 0);
-      salary.salaryAmount = amount;
-      salary.remainingSalary = amount - expenseTotal;
+      // Accumulate new income
+      salary.salaryAmount += amount;
+      salary.remainingSalary += amount;
+      if (notes) salary.notes = notes;
       await salary.save();
     }
 
@@ -86,41 +86,48 @@ export const addExpense = async (req, res) => {
 };
 
 
-// Get current month's salary with analytics
 export const getCurrentSalary = async (req, res) => {
   try {
     const userId = req.userId;
-
-    // Month in YYYY-MM format
     const month = format(new Date(), "yyyy-MM");
 
     const salary = await Salary.findOne({ user: userId, month });
 
     if (!salary) {
-      return res.status(404).json({
-        success: false,
-        message: "Salary not found for this month"
+      return res.status(200).json({
+        success: true,
+        data: {
+          month,
+          salaryAmount: 0,
+          totalSpent: 0,
+          remainingSalary: 0,
+          expenses: [],
+          savingsRate: 0
+        }
       });
     }
 
-    const totalSpent = salary.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalSpent = salary.expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    const savingsRate = salary.salaryAmount > 0
+      ? Math.round(((salary.salaryAmount - totalSpent) / salary.salaryAmount) * 100)
+      : 0;
 
     return res.status(200).json({
       success: true,
       data: {
-        month: salary.month,
+        month,
         salaryAmount: salary.salaryAmount,
         totalSpent,
         remainingSalary: salary.remainingSalary,
-        expenses: salary.expenses
+        expenses: salary.expenses,
+        savingsRate
       }
     });
   } catch (error) {
     console.error("Get current salary error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error"
-    });
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
 

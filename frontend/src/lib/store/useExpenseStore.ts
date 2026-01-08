@@ -38,47 +38,44 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   error: null,
   message: null,
 
-  addSalary: async (payload: AddSalaryData) => {
+  addSalary: async (payload) => {
     set({ isLoading: true, error: null, message: null });
     try {
       const { data } = await API.post("/salary", payload);
 
+      // Re-fetch current salary so UI updates instantly
+      await get().getCurrentSalary();
+
       set({
-        salary: {
-          month: data.salary.month,
-          salaryAmount: data.salary.salaryAmount,
-          totalSpent: data.salary.salaryAmount - data.salary.remainingSalary,
-          remainingSalary: data.salary.remainingSalary,
-          expenses: data.salary.expenses
-        },
         isLoading: false,
-        message: "Salary saved successfully"
+        message: "Income added successfully"
       });
     } catch (err: any) {
       set({
         isLoading: false,
-        error: err.response?.data?.message || "Failed to save salary"
+        error: err.response?.data?.message || "Failed to add income"
       });
     }
   },
 
   getCurrentSalary: async () => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true });
     try {
       const { data } = await API.get("/salary/current");
-
       set({
         salary: data.data,
-        isLoading: false
+        isLoading: false,
       });
+      return data.data;
     } catch (err: any) {
       set({
         isLoading: false,
-        error: err.response?.data?.message || "Failed to fetch salary"
+        salary: null,
+        error: err.response?.data?.message || "Failed to load salary",
       });
     }
   },
 
   clearError: () => set({ error: null }),
-  clearMessage: () => set({ message: null })
+  clearMessage: () => set({ message: null }),
 }));
