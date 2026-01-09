@@ -18,6 +18,11 @@ interface AddSalaryData {
   month: string; // "2026-01"
   notes?: string;
 }
+interface AddExpenseData {
+  title: string;
+  amount: number;
+  notes?: string;
+}
 
 interface ExpenseStore {
   salary: Salary | null;
@@ -27,6 +32,7 @@ interface ExpenseStore {
 
   addSalary: (payload: AddSalaryData) => Promise<void>;
   getCurrentSalary: () => Promise<void>;
+  addExpense: (payload: AddExpenseData) => Promise<void>;
 
   clearError: () => void;
   clearMessage: () => void;
@@ -70,6 +76,25 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         error: err.response?.data?.message || "Failed to load salary",
       });
       return null;
+    }
+  },
+  addExpense: async (payload) => {
+    set({ isLoading: true, error: null, message: null });
+    try {
+      const { data } = await API.post("/salary/expenses", payload);
+      
+      await get().getCurrentSalary();
+      
+      set({
+        isLoading: false,
+        message: "Expense added successfully"
+      });
+    } catch (err: any) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Failed to add expense"
+      });
+      throw err; 
     }
   },
 

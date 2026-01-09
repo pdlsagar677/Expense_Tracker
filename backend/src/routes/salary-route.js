@@ -9,6 +9,6 @@ router.use(authMiddleware);
 
 router.post("/", addOrUpdateSalary); 
 router.get("/current", getCurrentSalary); 
-router.post("/expense" , addExpense);
+router.post("/expenses" , addExpense);
 
 export default router;
