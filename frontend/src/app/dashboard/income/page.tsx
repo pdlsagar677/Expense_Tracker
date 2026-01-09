@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect , useCallback} from "react";
+import { useState, useEffect } from "react";
 import AddSalaryForm from "@/components/AddSalaryForm";
 import { 
   DollarSign, 
   TrendingUp, 
-  TrendingDown, 
   Wallet, 
   Calendar,
   Plus,
@@ -28,36 +27,24 @@ export default function Income() {
     savingsRate: 0
   });
 
-  // Unified function to load salary data
+  // Load financial data
   const loadFinancialData = async () => {
-    try {
-      const salaryData = await getCurrentSalary();
-      // Use the data from the store directly
-      if (salary) {
-        const totalSpent = salary.expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
-        const savingsRate = salary.salaryAmount > 0
-          ? Math.round(((salary.salaryAmount - totalSpent) / salary.salaryAmount) * 100)
-          : 0;
+    const salaryData = await getCurrentSalary();
+    
+    if (salaryData) {
+      const totalSpent = salaryData.expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+      const savingsRate = salaryData.salaryAmount > 0
+        ? Math.round(((salaryData.salaryAmount - totalSpent) / salaryData.salaryAmount) * 100)
+        : 0;
 
-        setFinancialData({
-          currentSalary: salary.salaryAmount || 0,
-          remainingBalance: salary.remainingSalary || 0,
-          monthlyExpenses: totalSpent,
-          savingsRate,
-          currentBudget: salary.salaryAmount || 0,
-        });
-      } else {
-        // If no salary data, set defaults
-        setFinancialData({
-          currentSalary: 0,
-          remainingBalance: 0,
-          monthlyExpenses: 0,
-          savingsRate: 0,
-          currentBudget: 0,
-        });
-      }
-    } catch (err) {
-      console.error("Error fetching salary data:", err);
+      setFinancialData({
+        currentSalary: salaryData.salaryAmount || 0,
+        remainingBalance: salaryData.remainingSalary || 0,
+        monthlyExpenses: totalSpent,
+        savingsRate,
+        currentBudget: salaryData.salaryAmount || 0,
+      });
+    } else {
       setFinancialData({
         currentSalary: 0,
         remainingBalance: 0,
@@ -68,10 +55,28 @@ export default function Income() {
     }
   };
 
-  // Load financial data on mount
+  // Load on mount
   useEffect(() => {
     loadFinancialData();
-  }, [salary]); // Re-run when salary changes
+  }, []);
+
+  // Update when salary changes in store
+  useEffect(() => {
+    if (salary) {
+      const totalSpent = salary.expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+      const savingsRate = salary.salaryAmount > 0
+        ? Math.round(((salary.salaryAmount - totalSpent) / salary.salaryAmount) * 100)
+        : 0;
+
+      setFinancialData({
+        currentSalary: salary.salaryAmount || 0,
+        remainingBalance: salary.remainingSalary || 0,
+        monthlyExpenses: totalSpent,
+        savingsRate,
+        currentBudget: salary.salaryAmount || 0,
+      });
+    }
+  }, [salary]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -113,7 +118,7 @@ export default function Income() {
           </div>
           
           <Button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => setShowAddForm(!showForm)}
             variant={showForm ? "outline" : "primary"}
             className="gap-2"
           >
@@ -136,8 +141,7 @@ export default function Income() {
             <AddSalaryForm
               onSuccess={async () => {
                 setShowForm(false);
-                // Wait for the store to update
-                await getCurrentSalary();
+                await getCurrentSalary(true); // Force refresh
               }}
             />
           </div>

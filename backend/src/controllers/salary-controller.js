@@ -32,13 +32,12 @@ export const addOrUpdateSalary = async (req, res) => {
       await salary.save();
     }
 
-    return res.status(200).json({ success: true, salary });
+    return res.status(200).json({ success: true, data: salary });
   } catch (error) {
     console.error("Add/update salary error:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
 
 // Add expense and deduct from salary
 export const addExpense = async (req, res) => {
@@ -72,20 +71,25 @@ export const addExpense = async (req, res) => {
       return res.status(400).json({ success: false, message: "Not enough remaining salary" });
     }
 
-    // Add expense
-    salary.expenses.push({ title, amount, notes });
+    // Add expense with date
+    salary.expenses.push({ 
+      title, 
+      amount, 
+      notes,
+      date: new Date()
+    });
     salary.remainingSalary = Math.max(0, salary.remainingSalary - amount);
 
     await salary.save();
 
-    return res.status(200).json({ success: true, salary });
+    return res.status(200).json({ success: true, data: salary });
   } catch (error) {
     console.error("Add expense error:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-
+// Get current salary for current month
 export const getCurrentSalary = async (req, res) => {
   try {
     const userId = req.userId;
@@ -130,4 +134,58 @@ export const getCurrentSalary = async (req, res) => {
   }
 };
 
+// Get all expenses across all months for current user
+export const getAllExpenses = async (req, res) => {
+  try {
+    const userId = req.userId;
 
+    const salaryData = await Salary.find({ user: userId })
+      .sort({ month: -1 }); // newest first
+
+    if (!salaryData || salaryData.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          expenses: [],
+          totalExpenses: 0
+        }
+      });
+    }
+
+    // Flatten all expenses from all months
+    const allExpenses = [];
+    salaryData.forEach((monthData) => {
+      if (monthData.expenses && Array.isArray(monthData.expenses)) {
+        monthData.expenses.forEach(expense => {
+          allExpenses.push({
+            _id: expense._id,
+            title: expense.title,
+            amount: expense.amount,
+            notes: expense.notes,
+            date: expense.date || monthData.createdAt,
+            month: monthData.month
+          });
+        });
+      }
+    });
+
+    // Sort by date (newest first)
+    allExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const totalExpenses = allExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        expenses: allExpenses,
+        totalExpenses
+      }
+    });
+  } catch (error) {
+    console.error("Get all expenses error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
