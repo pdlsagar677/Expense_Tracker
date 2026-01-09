@@ -1,7 +1,7 @@
 // lib/store/useAuthStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import API from "@/lib/services/api"; 
+import API from "@/lib/services/api";
 import { useExpenseStore } from "@/lib/store/useExpenseStore";
 
 interface User {
@@ -26,13 +26,13 @@ interface SignupData {
 }
 
 interface AuthStore {
-  user: User | null;
+  user: User | null; // memory-only, not persisted
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
   isCheckingAuth: boolean;
   message: string | null;
-  hasCheckedAuth: boolean; // Add this to track if auth has been checked
+  hasCheckedAuth: boolean;
 
   signup: (signupData: SignupData) => Promise<any>;
   login: (email: string, password: string) => Promise<void>;
@@ -55,54 +55,45 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       isCheckingAuth: false,
       message: null,
-      hasCheckedAuth: false, // Initialize as false
+      hasCheckedAuth: false,
 
-      signup: async (signupData: SignupData) => {
+      signup: async (signupData) => {
         set({ isLoading: true, error: null, message: null });
         try {
           const { data } = await API.post("/auth/signup", signupData);
-          
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             user: data.user,
-            message: data.message || "Signup successful! Please verify your email.",
+            message: data.message || "Signup successful! Verify your email.",
             isAuthenticated: false,
             hasCheckedAuth: true
           });
-          
-          return data; 
-          
+          return data;
         } catch (err: any) {
-          const errorMessage = err.response?.data?.message || 
-                              err.response?.data?.error || 
-                              err.message || 
-                              "Signup failed. Please try again.";
-          
-          set({ 
-            isLoading: false, 
-            error: errorMessage,
+          set({
+            isLoading: false,
+            error: err.response?.data?.message || err.message || "Signup failed.",
             hasCheckedAuth: true
           });
-          
           throw err;
         }
       },
 
-      verifyEmail: async (code: string) => {
+      verifyEmail: async (code) => {
         set({ isLoading: true, error: null });
         try {
           const { data } = await API.post("/auth/verify-email", { code });
-          set({ 
-            isLoading: false, 
-            isAuthenticated: true, 
+          set({
+            isLoading: false,
+            isAuthenticated: true,
             user: data.user,
             message: data.message || "Email verified successfully!",
             hasCheckedAuth: true
           });
           return data;
         } catch (err: any) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: err.response?.data?.message || err.message || "Email verification failed",
             hasCheckedAuth: true
           });
@@ -110,19 +101,19 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      resendVerification: async (email: string) => {
+      resendVerification: async (email) => {
         set({ isLoading: true, error: null });
         try {
           const { data } = await API.post("/auth/resend-verification", { email });
-          set({ 
-            isLoading: false, 
-            message: data.message || "New verification code sent to your email!",
+          set({
+            isLoading: false,
+            message: data.message || "Verification code sent!",
             hasCheckedAuth: true
           });
           return data;
         } catch (err: any) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: err.response?.data?.message || err.message || "Failed to resend verification code",
             hasCheckedAuth: true
           });
@@ -130,20 +121,20 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      login: async (email: string, password: string) => {
+      login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
           const { data } = await API.post("/auth/login", { email, password });
-          set({ 
-            isLoading: false, 
-            isAuthenticated: true, 
+          set({
+            isLoading: false,
+            isAuthenticated: true,
             user: data.user,
             message: data.message,
             hasCheckedAuth: true
           });
         } catch (err: any) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: err.response?.data?.message || err.message || "Login failed",
             hasCheckedAuth: true
           });
@@ -153,79 +144,74 @@ export const useAuthStore = create<AuthStore>()(
 
       checkAuth: async () => {
         const state = get();
-        // Don't check if already checking or already checked
-        if (state.isCheckingAuth || state.hasCheckedAuth) {
-          return;
-        }
-        
+        if (state.isCheckingAuth || state.hasCheckedAuth) return;
+
         set({ isCheckingAuth: true, error: null });
         try {
           const { data } = await API.get("/auth/check-auth");
           if (data.user) {
-            set({ 
-              isAuthenticated: true, 
-              user: data.user, 
+            set({
+              isAuthenticated: true,
+              user: data.user,
               isCheckingAuth: false,
               hasCheckedAuth: true
             });
           } else {
-            set({ 
-              isAuthenticated: false, 
-              user: null, 
+            set({
+              isAuthenticated: false,
+              user: null,
               isCheckingAuth: false,
               hasCheckedAuth: true
             });
           }
-        } catch (err) {
-          set({ 
-            isAuthenticated: false, 
-            user: null, 
+        } catch {
+          set({
+            isAuthenticated: false,
+            user: null,
             isCheckingAuth: false,
             hasCheckedAuth: true
           });
         }
       },
 
-  logout: async () => {
-  set({ isLoading: true, error: null });
-
-  try {
-    await API.post("/auth/logout", {}, { withCredentials: true });
-
-    const { clearCache } = useExpenseStore.getState();
-    clearCache();
-    localStorage.removeItem("expense-storage");
-
-    set({
-      user: null,
-      isAuthenticated: false,
-      message: "Logged out successfully",
-      isLoading: false,
-      hasCheckedAuth: true
-    });
-
-  } catch (err: any) {
-    set({
-      isLoading: false,
-      error: err.response?.data?.message || "Logout failed",
-      hasCheckedAuth: true
-    });
-  }
-},
-
-
-      forgotPassword: async (email: string) => {
+      logout: async () => {
         set({ isLoading: true, error: null });
         try {
-          const { data } = await API.post("/auth/forgot-password", { email });
-          set({ 
-            isLoading: false, 
-            message: data.message || "Password reset email sent successfully!",
+          await API.post("/auth/logout", {}, { withCredentials: true });
+
+          // CLEAR all user-specific frontend caches
+          const expenseStore = useExpenseStore.getState();
+          expenseStore.clearCache();
+          localStorage.removeItem("expense-storage");
+
+          set({
+            user: null,
+            isAuthenticated: false,
+            message: "Logged out successfully",
+            isLoading: false,
             hasCheckedAuth: true
           });
         } catch (err: any) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
+            error: err.response?.data?.message || "Logout failed",
+            hasCheckedAuth: true
+          });
+        }
+      },
+
+      forgotPassword: async (email) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.post("/auth/forgot-password", { email });
+          set({
+            isLoading: false,
+            message: data.message || "Password reset email sent!",
+            hasCheckedAuth: true
+          });
+        } catch (err: any) {
+          set({
+            isLoading: false,
             error: err.response?.data?.message || err.message || "Failed to send reset email",
             hasCheckedAuth: true
           });
@@ -233,18 +219,18 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      resetPassword: async (token: string, password: string) => {
+      resetPassword: async (token, password) => {
         set({ isLoading: true, error: null });
         try {
           const { data } = await API.post(`/auth/reset-password/${token}`, { password });
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             message: data.message || "Password reset successfully!",
             hasCheckedAuth: true
           });
         } catch (err: any) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: err.response?.data?.message || err.message || "Password reset failed",
             hasCheckedAuth: true
           });
@@ -256,12 +242,11 @@ export const useAuthStore = create<AuthStore>()(
       clearMessage: () => set({ message: null }),
     }),
     {
-      name: "auth-storage", // name of the item in storage
-      partialize: (state) => ({ 
-        user: state.user,
+      name: "auth-storage",
+      partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         hasCheckedAuth: state.hasCheckedAuth
-      }), // persist only these fields
+      }),
     }
   )
 );
