@@ -8,6 +8,7 @@ interface Expense {
   amount: number;
   notes?: string;
   date: string;
+  month?: string;
 }
 
 interface Salary {
@@ -17,6 +18,15 @@ interface Salary {
   remainingSalary: number;
   expenses: Expense[];
   savingsRate?: number;
+}
+
+interface SalaryAddition {
+  _id: string;
+  month: string;
+  salaryAmount: number;
+  totalMonthSalary: number;
+  notes?: string;
+  createdAt: string;
 }
 
 interface AddSalaryData {
@@ -33,26 +43,34 @@ interface AddExpenseData {
 
 interface ExpenseStore {
   salary: Salary | null;
+
   allExpenses: Expense[];
   totalExpenses: number;
+
+  salaryAdditions: SalaryAddition[];
+
   isLoading: boolean;
   error: string | null;
   message: string | null;
-  lastFetched: number | null;
-  
-  // Cache duration (5 minutes)
+
+  lastFetchedSalary: number | null;
+  lastFetchedExpenses: number | null;
+  lastFetchedAdditions: number | null;
+
   CACHE_DURATION: number;
 
   addSalary: (payload: AddSalaryData) => Promise<void>;
   getCurrentSalary: (forceRefresh?: boolean) => Promise<Salary | null>;
+
   addExpense: (payload: AddExpenseData) => Promise<void>;
   getAllExpenses: (forceRefresh?: boolean) => Promise<void>;
-  
-  // Utility methods
+
+  getSalaryAdditions: (forceRefresh?: boolean) => Promise<void>;
+  deleteSalaryAddition: (id: string) => Promise<void>;
+
   clearError: () => void;
   clearMessage: () => void;
   clearCache: () => void;
-  shouldRefetch: () => boolean;
 }
 
 export const useExpenseStore = create<ExpenseStore>()(
@@ -61,65 +79,77 @@ export const useExpenseStore = create<ExpenseStore>()(
       salary: null,
       allExpenses: [],
       totalExpenses: 0,
+      salaryAdditions: [],
       isLoading: false,
       error: null,
       message: null,
-      lastFetched: null,
-      CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+      lastFetchedSalary: null,
+      lastFetchedExpenses: null,
+      lastFetchedAdditions: null,
+      CACHE_DURATION: 60 * 1000,
 
-      shouldRefetch: () => {
-        const { lastFetched, CACHE_DURATION } = get();
-        if (!lastFetched) return true;
-        return Date.now() - lastFetched > CACHE_DURATION;
-      },
-
+      /* -------- SALARY ADD ---------- */
       addSalary: async (payload) => {
         set({ isLoading: true, error: null, message: null });
         try {
           await API.post("/salary", payload);
-          
-          // Force refresh after adding salary
-          await get().getCurrentSalary(true);
-          
-          set({ 
-            isLoading: false, 
-            message: "Income added successfully",
-            lastFetched: Date.now()
+
+          /* invalidate cache immediately */
+          set({
+            lastFetchedSalary: null,
+            lastFetchedAdditions: null,
           });
+
+          await Promise.all([
+            get().getCurrentSalary(true),
+            get().getSalaryAdditions(true)
+          ]);
+
+          set({ isLoading: false, message: "Income added successfully" });
+
+          setTimeout(() => get().clearMessage(), 3000);
         } catch (err: any) {
           set({
             isLoading: false,
-            error: err.response?.data?.message || "Failed to add income"
+            error: err.response?.data?.message || "Failed to add income",
           });
           throw err;
         }
       },
 
-      getCurrentSalary: async (forceRefresh = false): Promise<Salary | null> => {
-        // Use cache if available and not forcing refresh
-        if (!forceRefresh && !get().shouldRefetch() && get().salary) {
-          return get().salary;
+      /* -------- GET CURRENT SALARY (cached) -------- */
+      getCurrentSalary: async (forceRefresh = false) => {
+        const state = get();
+
+        if (
+          !forceRefresh &&
+          state.lastFetchedSalary &&
+          Date.now() - state.lastFetchedSalary < state.CACHE_DURATION &&
+          state.salary
+        ) {
+          return state.salary;
         }
 
         set({ isLoading: true, error: null });
+
         try {
           const { data } = await API.get("/salary/current");
-          
+
           const salaryData = data.data || {
             month: new Date().toISOString().slice(0, 7),
             salaryAmount: 0,
             totalSpent: 0,
             remainingSalary: 0,
             expenses: [],
-            savingsRate: 0
+            savingsRate: 0,
           };
 
           set({
             salary: salaryData,
             isLoading: false,
-            lastFetched: Date.now()
+            lastFetchedSalary: Date.now(),
           });
-          
+
           return salaryData;
         } catch (err: any) {
           set({
@@ -131,52 +161,61 @@ export const useExpenseStore = create<ExpenseStore>()(
         }
       },
 
+      /* -------- ADD EXPENSE ---------- */
       addExpense: async (payload) => {
         set({ isLoading: true, error: null, message: null });
+
         try {
           await API.post("/salary/expenses", payload);
-          
-          // Update both current salary and all expenses
+
+          /* invalidate cache immediately */
+          set({
+            lastFetchedSalary: null,
+            lastFetchedExpenses: null,
+          });
+
           await Promise.all([
             get().getCurrentSalary(true),
             get().getAllExpenses(true)
           ]);
-          
-          set({
-            isLoading: false,
-            message: "Expense added successfully",
-            lastFetched: Date.now()
-          });
+
+          set({ isLoading: false, message: "Expense added successfully" });
+
+          setTimeout(() => get().clearMessage(), 3000);
         } catch (err: any) {
           set({
             isLoading: false,
-            error: err.response?.data?.message || "Failed to add expense"
+            error: err.response?.data?.message || "Failed to add expense",
           });
           throw err;
         }
       },
 
-      getAllExpenses: async (forceRefresh = false): Promise<void> => {
-        // Use cache if available
-        if (!forceRefresh && !get().shouldRefetch() && get().allExpenses.length > 0) {
+      /* -------- GET ALL EXPENSES (cached) -------- */
+      getAllExpenses: async (forceRefresh = false) => {
+        const state = get();
+
+        if (
+          !forceRefresh &&
+          state.lastFetchedExpenses &&
+          Date.now() - state.lastFetchedExpenses < state.CACHE_DURATION &&
+          state.allExpenses.length > 0
+        ) {
           return;
         }
 
         set({ isLoading: true, error: null });
+
         try {
           const { data } = await API.get("/salary/expenses/all");
-          
-          // Backend now returns { expenses: [], totalExpenses: number }
-          const responseData = data.data || { expenses: [], totalExpenses: 0 };
-          
-          const allExpenses = responseData.expenses || [];
-          const totalExpenses = responseData.totalExpenses || 0;
 
-          set({ 
-            allExpenses,
-            totalExpenses,
+          const responseData = data.data || { expenses: [], totalExpenses: 0 };
+
+          set({
+            allExpenses: responseData.expenses || [],
+            totalExpenses: responseData.totalExpenses || 0,
             isLoading: false,
-            lastFetched: Date.now()
+            lastFetchedExpenses: Date.now(),
           });
         } catch (err: any) {
           set({
@@ -186,14 +225,81 @@ export const useExpenseStore = create<ExpenseStore>()(
         }
       },
 
+      /* -------- GET SALARY ADDITIONS (cached) -------- */
+      getSalaryAdditions: async (forceRefresh = false) => {
+        const state = get();
+
+        if (
+          !forceRefresh &&
+          state.lastFetchedAdditions &&
+          Date.now() - state.lastFetchedAdditions < state.CACHE_DURATION &&
+          state.salaryAdditions.length > 0
+        ) {
+          return;
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+          const { data } = await API.get("/salary/additions");
+
+          set({
+            salaryAdditions: data.data || [],
+            isLoading: false,
+            lastFetchedAdditions: Date.now(),
+          });
+        } catch (err: any) {
+          set({
+            isLoading: false,
+            error: err.response?.data?.message || "Failed to load salary history",
+          });
+        }
+      },
+
+      /* -------- DELETE SALARY ADDITION + invalidate -------- */
+      deleteSalaryAddition: async (id: string) => {
+        set({ isLoading: true, error: null, message: null });
+
+        try {
+          await API.delete(`/salary/additions/${id}`);
+
+          /* fully invalidate caches */
+          set({
+            lastFetchedAdditions: null,
+            lastFetchedSalary: null,
+          });
+
+          await get().getSalaryAdditions(true);
+          await get().getCurrentSalary(true);
+
+          set({
+            isLoading: false,
+            message: "Salary addition deleted successfully",
+          });
+
+          setTimeout(() => get().clearMessage(), 3000);
+        } catch (err: any) {
+          set({
+            isLoading: false,
+            error: err.response?.data?.message || "Failed to delete salary addition",
+          });
+          throw err;
+        }
+      },
+
       clearError: () => set({ error: null }),
       clearMessage: () => set({ message: null }),
-      clearCache: () => set({ 
-        salary: null, 
-        allExpenses: [], 
-        totalExpenses: 0,
-        lastFetched: null 
-      }),
+
+      clearCache: () =>
+        set({
+          salary: null,
+          allExpenses: [],
+          totalExpenses: 0,
+          salaryAdditions: [],
+          lastFetchedSalary: null,
+          lastFetchedExpenses: null,
+          lastFetchedAdditions: null,
+        }),
     }),
     {
       name: "expense-storage",
@@ -201,7 +307,10 @@ export const useExpenseStore = create<ExpenseStore>()(
         salary: state.salary,
         allExpenses: state.allExpenses,
         totalExpenses: state.totalExpenses,
-        lastFetched: state.lastFetched
+        salaryAdditions: state.salaryAdditions,
+        lastFetchedSalary: state.lastFetchedSalary,
+        lastFetchedExpenses: state.lastFetchedExpenses,
+        lastFetchedAdditions: state.lastFetchedAdditions,
       }),
     }
   )

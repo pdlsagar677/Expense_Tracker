@@ -23,8 +23,8 @@ export default function ExpensesPage() {
     error, 
     clearError, 
     salary,
-    allExpenses,      // This is the correct property from store
-    totalExpenses     // This is the correct property from store
+    allExpenses,      
+    totalExpenses     
   } = useExpenseStore();
   
   const [showAddForm, setShowAddForm] = useState(false);
@@ -300,14 +300,7 @@ export default function ExpensesPage() {
             <Receipt className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No expenses recorded</h3>
             <p className="text-gray-600 mb-6">Start by adding your first expense.</p>
-            <Button
-              variant="primary"
-              onClick={() => setShowAddForm(true)}
-              className="gap-2"
-            >
-              <Plus size={18} />
-              Add Your First Expense
-            </Button>
+           
           </div>
         ) : (
           <div className="space-y-4">

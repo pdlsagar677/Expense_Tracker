@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Button from "@/components/Button";
 import { useExpenseStore } from "@/lib/store/useExpenseStore";
+import SalaryHistory from "@/components/SalaryHistorypage";
 
 export default function Income() {
   const [showForm, setShowForm] = useState(false);
@@ -118,7 +119,7 @@ export default function Income() {
           </div>
           
           <Button
-            onClick={() => setShowAddForm(!showForm)}
+            onClick={() => setShowForm(!showForm)}
             variant={showForm ? "outline" : "primary"}
             className="gap-2"
           >
@@ -342,31 +343,10 @@ export default function Income() {
                 </Button>
               </div>
 
-              {/* View History Card */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Calendar className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Salary History</h4>
-                    <p className="text-sm text-gray-600">View past salary records</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Track your income history and analyze salary trends over time.
-                </p>
-                <Button
-                  onClick={() => {/* Navigate to salary history */}}
-                  variant="outline"
-                  fullWidth
-                  className="border-blue-300 text-blue-600 hover:bg-blue-50"
-                >
-                  <Calendar size={18} />
-                  View History
-                </Button>
-              </div>
+
             </div>
+
+            <SalaryHistory/>
           </>
         )}
       </div>

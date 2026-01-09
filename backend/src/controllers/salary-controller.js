@@ -1,4 +1,3 @@
-// src/controllers/salary-controller.js
 import { Salary } from "../model/salary.js";
 import { format } from "date-fns";
 
@@ -21,6 +20,11 @@ export const addOrUpdateSalary = async (req, res) => {
         month,
         salaryAmount: amount,
         remainingSalary: amount,
+        salaryAdditions: [{
+          amount,
+          notes,
+          date: new Date()
+        }],
         expenses: [],
         notes,
       });
@@ -28,6 +32,14 @@ export const addOrUpdateSalary = async (req, res) => {
       // Accumulate new income
       salary.salaryAmount += amount;
       salary.remainingSalary += amount;
+      
+      // Add to salaryAdditions array
+      salary.salaryAdditions.push({
+        amount,
+        notes,
+        date: new Date()
+      });
+      
       if (notes) salary.notes = notes;
       await salary.save();
     }
@@ -183,6 +195,137 @@ export const getAllExpenses = async (req, res) => {
     });
   } catch (error) {
     console.error("Get all expenses error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+// Get salary additions history (INDIVIDUAL ADDITIONS)
+export const getSalaryAdditions = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const salaryData = await Salary.find({ user: userId })
+      .sort({ month: -1 }) // newest first
+      .select('month salaryAmount salaryAdditions');
+
+    if (!salaryData || salaryData.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: []
+      });
+    }
+
+    // Create flat array of all individual salary additions
+    const allAdditions = [];
+    
+    salaryData.forEach(record => {
+      if (record.salaryAdditions && Array.isArray(record.salaryAdditions)) {
+        record.salaryAdditions.forEach(addition => {
+          allAdditions.push({
+            _id: addition._id,
+            month: record.month,
+            salaryAmount: addition.amount, // Individual addition amount
+            totalMonthSalary: record.salaryAmount, // Total for the month
+            notes: addition.notes,
+            createdAt: addition.date || new Date()
+          });
+        });
+      }
+    });
+
+    // Sort by date (newest first)
+    allAdditions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return res.status(200).json({
+      success: true,
+      data: allAdditions
+    });
+  } catch (error) {
+    console.error("Get salary additions error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+// Delete individual salary addition
+export const deleteSalaryAddition = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    // Find the salary document that contains this addition
+    const salary = await Salary.findOne({
+      user: userId,
+      'salaryAdditions._id': id
+    });
+
+    if (!salary) {
+      return res.status(404).json({
+        success: false,
+        message: "Salary addition not found"
+      });
+    }
+
+    // Find the specific addition to get its amount
+    const addition = salary.salaryAdditions.id(id);
+    if (!addition) {
+      return res.status(404).json({
+        success: false,
+        message: "Salary addition not found"
+      });
+    }
+
+    // Update the salary amounts
+    const additionAmount = addition.amount;
+    salary.salaryAmount = Math.max(0, salary.salaryAmount - additionAmount);
+    salary.remainingSalary = Math.max(0, salary.remainingSalary - additionAmount);
+    
+    // Remove the addition from the array
+    salary.salaryAdditions.pull({ _id: id });
+    
+    await salary.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Salary addition deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete salary addition error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+// Delete salary record for a specific month (ENTIRE MONTH)
+export const deleteSalary = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    const salary = await Salary.findOne({ _id: id, user: userId });
+
+    if (!salary) {
+      return res.status(404).json({
+        success: false,
+        message: "Salary record not found"
+      });
+    }
+
+    await Salary.deleteOne({ _id: id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Salary record deleted successfully"
+    });
+  } catch (error) {
+    console.error("Delete salary error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error"
