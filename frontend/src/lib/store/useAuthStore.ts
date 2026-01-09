@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import API from "@/lib/services/api"; 
+import { useExpenseStore } from "@/lib/store/useExpenseStore";
 
 interface User {
   _id: string;
@@ -185,18 +186,22 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-     logout: async () => {
+  logout: async () => {
   set({ isLoading: true, error: null });
 
   try {
     await API.post("/auth/logout", {}, { withCredentials: true });
+
+    const { clearCache } = useExpenseStore.getState();
+    clearCache();
+    localStorage.removeItem("expense-storage");
 
     set({
       user: null,
       isAuthenticated: false,
       message: "Logged out successfully",
       isLoading: false,
-      hasCheckedAuth: true  // keep true to allow redirect
+      hasCheckedAuth: true
     });
 
   } catch (err: any) {
