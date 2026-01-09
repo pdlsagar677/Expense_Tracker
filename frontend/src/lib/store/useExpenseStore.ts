@@ -32,6 +32,7 @@ interface ExpenseStore {
   clearMessage: () => void;
 }
 
+
 export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   salary: null,
   isLoading: false,
@@ -41,15 +42,10 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
   addSalary: async (payload) => {
     set({ isLoading: true, error: null, message: null });
     try {
-      const { data } = await API.post("/salary", payload);
-
-      // Re-fetch current salary so UI updates instantly
+      await API.post("/salary", payload);
+      // Re-fetch data
       await get().getCurrentSalary();
-
-      set({
-        isLoading: false,
-        message: "Income added successfully"
-      });
+      set({ isLoading: false, message: "Income added successfully" });
     } catch (err: any) {
       set({
         isLoading: false,
@@ -58,7 +54,7 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
     }
   },
 
-  getCurrentSalary: async () => {
+  getCurrentSalary: async (): Promise<any> => { 
     set({ isLoading: true });
     try {
       const { data } = await API.get("/salary/current");
@@ -66,16 +62,18 @@ export const useExpenseStore = create<ExpenseStore>((set, get) => ({
         salary: data.data,
         isLoading: false,
       });
-      return data.data;
+      return data.data; // This now returns the object to the component
     } catch (err: any) {
       set({
         isLoading: false,
         salary: null,
         error: err.response?.data?.message || "Failed to load salary",
       });
+      return null;
     }
   },
 
   clearError: () => set({ error: null }),
   clearMessage: () => set({ message: null }),
 }));
+

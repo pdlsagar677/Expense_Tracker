@@ -1,7 +1,6 @@
-// src/app/dashboard/add-salary/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect , useCallback} from "react";
 import AddSalaryForm from "@/components/AddSalaryForm";
 import { 
   DollarSign, 
@@ -19,7 +18,7 @@ import { useExpenseStore } from "@/lib/store/useExpenseStore";
 
 export default function Income() {
   const [showForm, setShowForm] = useState(false);
-  const { getCurrentSalary, isLoading } = useExpenseStore();
+  const { getCurrentSalary, isLoading, salary } = useExpenseStore();
 
   const [financialData, setFinancialData] = useState({
     currentSalary: 0,
@@ -33,15 +32,22 @@ export default function Income() {
   const loadFinancialData = async () => {
     try {
       const salaryData = await getCurrentSalary();
-      if (salaryData) {
+      // Use the data from the store directly
+      if (salary) {
+        const totalSpent = salary.expenses?.reduce((sum, e) => sum + (e.amount || 0), 0) || 0;
+        const savingsRate = salary.salaryAmount > 0
+          ? Math.round(((salary.salaryAmount - totalSpent) / salary.salaryAmount) * 100)
+          : 0;
+
         setFinancialData({
-          currentSalary: salaryData.salaryAmount || 0,
-          remainingBalance: salaryData.remainingSalary || 0,
-          monthlyExpenses: salaryData.totalSpent || 0,
-          savingsRate: salaryData.savingsRate || 0,
-          currentBudget: salaryData.salaryAmount || 0,
+          currentSalary: salary.salaryAmount || 0,
+          remainingBalance: salary.remainingSalary || 0,
+          monthlyExpenses: totalSpent,
+          savingsRate,
+          currentBudget: salary.salaryAmount || 0,
         });
       } else {
+        // If no salary data, set defaults
         setFinancialData({
           currentSalary: 0,
           remainingBalance: 0,
@@ -65,7 +71,7 @@ export default function Income() {
   // Load financial data on mount
   useEffect(() => {
     loadFinancialData();
-  }, [getCurrentSalary]);
+  }, [salary]); // Re-run when salary changes
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -128,9 +134,10 @@ export default function Income() {
         {showForm ? (
           <div className="mt-6">
             <AddSalaryForm
-              onSuccess={() => {
+              onSuccess={async () => {
                 setShowForm(false);
-                loadFinancialData(); // Refresh UI after adding salary
+                // Wait for the store to update
+                await getCurrentSalary();
               }}
             />
           </div>

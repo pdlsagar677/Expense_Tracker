@@ -169,30 +169,22 @@ const AddSalaryForm = () => {
       
 
         {/* Submit Button */}
-        <div className="pt-4">
-          <Button
-            type="submit"
-            variant="primary"
-            fullWidth
-            isLoading={isLoading}
-            disabled={!isFormValid() || isLoading}
-            className="py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent " />
-                Saving Salary...
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                <DollarSign size={18} />
-                Save Salary
-              </span>
-            )}
-          </Button>
-        </div>
-
-       
+    
+       <div className="pt-4">
+  <Button
+    type="submit"
+    variant="primary"
+    fullWidth
+    isLoading={isLoading}
+    disabled={!isFormValid() || isLoading}
+    className="py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+  >
+    <span className="flex items-center justify-center gap-2">
+      <DollarSign size={18} />
+      Save Salary
+    </span>
+  </Button>
+</div>
       </form>
 
      
