@@ -1,8 +1,7 @@
-// lib/store/useAuthStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import API from "@/lib/services/api";
-import { useExpenseStore } from "@/lib/store/useExpenseStore";
+import { useExpenseStore } from "./useExpenseStore";
 
 interface User {
   _id: string;
@@ -26,7 +25,7 @@ interface SignupData {
 }
 
 interface AuthStore {
-  user: User | null; // memory-only, not persisted
+  user: User | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -34,7 +33,7 @@ interface AuthStore {
   message: string | null;
   hasCheckedAuth: boolean;
 
-  signup: (signupData: SignupData) => Promise<any>;
+  signup: (data: SignupData) => Promise<any>;
   login: (email: string, password: string) => Promise<void>;
   verifyEmail: (code: string) => Promise<void>;
   resendVerification: (email: string) => Promise<void>;
@@ -66,14 +65,14 @@ export const useAuthStore = create<AuthStore>()(
             user: data.user,
             message: data.message || "Signup successful! Verify your email.",
             isAuthenticated: false,
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           return data;
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || err.message || "Signup failed.",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           throw err;
         }
@@ -88,14 +87,14 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: true,
             user: data.user,
             message: data.message || "Email verified successfully!",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           return data;
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || err.message || "Email verification failed",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           throw err;
         }
@@ -108,14 +107,14 @@ export const useAuthStore = create<AuthStore>()(
           set({
             isLoading: false,
             message: data.message || "Verification code sent!",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           return data;
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || err.message || "Failed to resend verification code",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           throw err;
         }
@@ -130,13 +129,13 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: true,
             user: data.user,
             message: data.message,
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || err.message || "Login failed",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           throw err;
         }
@@ -149,27 +148,18 @@ export const useAuthStore = create<AuthStore>()(
         set({ isCheckingAuth: true, error: null });
         try {
           const { data } = await API.get("/auth/check-auth");
-          if (data.user) {
-            set({
-              isAuthenticated: true,
-              user: data.user,
-              isCheckingAuth: false,
-              hasCheckedAuth: true
-            });
-          } else {
-            set({
-              isAuthenticated: false,
-              user: null,
-              isCheckingAuth: false,
-              hasCheckedAuth: true
-            });
-          }
+          set({
+            isAuthenticated: !!data.user,
+            user: data.user || null,
+            isCheckingAuth: false,
+            hasCheckedAuth: true,
+          });
         } catch {
           set({
             isAuthenticated: false,
             user: null,
             isCheckingAuth: false,
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
         }
       },
@@ -179,7 +169,7 @@ export const useAuthStore = create<AuthStore>()(
         try {
           await API.post("/auth/logout", {}, { withCredentials: true });
 
-          // CLEAR all user-specific frontend caches
+          // CLEAR frontend caches
           const expenseStore = useExpenseStore.getState();
           expenseStore.clearCache();
           localStorage.removeItem("expense-storage");
@@ -189,13 +179,13 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             message: "Logged out successfully",
             isLoading: false,
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || "Logout failed",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
         }
       },
@@ -207,13 +197,13 @@ export const useAuthStore = create<AuthStore>()(
           set({
             isLoading: false,
             message: data.message || "Password reset email sent!",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || err.message || "Failed to send reset email",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           throw err;
         }
@@ -226,13 +216,13 @@ export const useAuthStore = create<AuthStore>()(
           set({
             isLoading: false,
             message: data.message || "Password reset successfully!",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
         } catch (err: any) {
           set({
             isLoading: false,
             error: err.response?.data?.message || err.message || "Password reset failed",
-            hasCheckedAuth: true
+            hasCheckedAuth: true,
           });
           throw err;
         }
@@ -245,7 +235,7 @@ export const useAuthStore = create<AuthStore>()(
       name: "auth-storage",
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
-        hasCheckedAuth: state.hasCheckedAuth
+        hasCheckedAuth: state.hasCheckedAuth,
       }),
     }
   )

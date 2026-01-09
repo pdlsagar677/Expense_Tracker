@@ -159,16 +159,13 @@ export default function DashboardPage() {
                 Add Expense
               </button>
             </Link>
-            <Link href="/dashboard/add-salary">
+            <br />
+<br />            <Link href="/dashboard/income">
               <button className="w-full py-2.5 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors">
                 Add Income
               </button>
             </Link>
-            <Link href="/dashboard/budgets">
-              <button className="w-full py-2.5 px-4 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                Create Budget
-              </button>
-            </Link>
+           
           </div>
         </div>
       </div>
