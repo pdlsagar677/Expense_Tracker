@@ -420,7 +420,7 @@ export default function ProfilePage() {
         <Button
           onClick={() => {
             // Navigate to change password or other settings
-            router.push('/change-password');
+            router.push('/dashboard/profile/change-password');
           }}
         >
           Change Password

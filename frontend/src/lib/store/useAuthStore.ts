@@ -29,7 +29,10 @@ interface UpdateProfileData {
   age?: number;
   gender?: string;
 }
-
+interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
 
 interface AuthStore {
   user: User | null;
@@ -48,6 +51,7 @@ interface AuthStore {
   logout: () => Promise<void>;
   getProfile: () => Promise<void>;
   updateProfile: (data: UpdateProfileData) => Promise<void>;
+  changePassword: (data: ChangePasswordData) => Promise<void>;
 
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -245,7 +249,23 @@ export const useAuthStore = create<AuthStore>()(
           throw err;
         }
       },
-
+ // CHANGE PASSWORD
+      changePassword: async (data: ChangePasswordData) => {
+        set({ isLoading: true, error: null, message: null });
+        try {
+          const { data: response } = await API.put("/auth/change-password", data);
+          set({
+            isLoading: false,
+            message: response.message || "Password changed successfully"
+          });
+        } catch (err: any) {
+          set({
+            isLoading: false,
+            error: err.response?.data?.message || "Failed to change password"
+          });
+          throw err;
+        }
+      },
       
 
       resetPassword: async (token, password) => {

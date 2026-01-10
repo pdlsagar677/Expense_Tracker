@@ -10,6 +10,7 @@ import {
   checkAuth,
   getProfileById,
   updateProfileById,
+  changePassword,
 } from "../controllers/auth-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js"; // Use the new middleware
 
@@ -23,6 +24,7 @@ router.put("/profile",authMiddleware, updateProfileById);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
+router.put("/change-password",authMiddleware, changePassword);
 
 router.get("/check-auth", authMiddleware, checkAuth);
 
