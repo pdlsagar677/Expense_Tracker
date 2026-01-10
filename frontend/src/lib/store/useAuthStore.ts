@@ -23,6 +23,13 @@ interface SignupData {
   age: string;
   gender: string;
 }
+interface UpdateProfileData {
+  name?: string;
+  phoneNumber?: string;
+  age?: number;
+  gender?: string;
+}
+
 
 interface AuthStore {
   user: User | null;
@@ -39,6 +46,9 @@ interface AuthStore {
   resendVerification: (email: string) => Promise<void>;
   checkAuth: () => Promise<void>;
   logout: () => Promise<void>;
+  getProfile: () => Promise<void>;
+  updateProfile: (data: UpdateProfileData) => Promise<void>;
+
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
   clearError: () => void;
@@ -189,6 +199,7 @@ export const useAuthStore = create<AuthStore>()(
           });
         }
       },
+ 
 
       forgotPassword: async (email) => {
         set({ isLoading: true, error: null });
@@ -208,6 +219,34 @@ export const useAuthStore = create<AuthStore>()(
           throw err;
         }
       },
+      getProfile: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data } = await API.get("/auth/profile");
+          set({ user: data.user, isLoading: false });
+        } catch (err: any) {
+          set({ isLoading: false, error: err.response?.data?.message || "Failed to load profile" });
+          throw err;
+        }
+      },
+
+        // UPDATE PROFILE
+      updateProfile: async (updateData: UpdateProfileData) => {
+        set({ isLoading: true, error: null, message: null });
+        try {
+          const { data } = await API.put("/auth/profile", updateData);
+          set({
+            user: data.user,
+            isLoading: false,
+            message: data.message || "Profile updated successfully"
+          });
+        } catch (err: any) {
+          set({ isLoading: false, error: err.response?.data?.message || "Failed to update profile" });
+          throw err;
+        }
+      },
+
+      
 
       resetPassword: async (token, password) => {
         set({ isLoading: true, error: null });

@@ -270,3 +270,64 @@ export const resetPassword = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+// GET PROFILE
+export const getProfileById = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// UPDATE PROFILE
+export const updateProfileById = async (req, res) => {
+  try {
+    const { name, phoneNumber, age, gender } = req.body;
+    
+    // Validate phone number
+    if (phoneNumber && !/^\d{10}$/.test(phoneNumber)) {
+      return res.status(400).json({ success: false, message: "Phone number must be 10 digits" });
+    }
+    
+    // Validate age
+    if (age) {
+      const ageNum = Number(age);
+      if (isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+        return res.status(400).json({ success: false, message: "Age must be between 1 and 120" });
+      }
+    }
+    
+    // Validate gender
+    if (gender) {
+      const validGenders = ["male", "female", "other"];
+      if (!validGenders.includes(gender.toLowerCase())) {
+        return res.status(400).json({ success: false, message: "Invalid gender selection" });
+      }
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // Update fields
+    if (name) user.name = name;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
+    if (age) user.age = Number(age);
+    if (gender) user.gender = gender.toLowerCase();
+    
+    await user.save();
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "Profile updated successfully",
+      user: user.toJSON()
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
