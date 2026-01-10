@@ -79,23 +79,23 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+  
 <header className="bg-white shadow-sm border-b">
   <div className="container mx-auto px-6 py-4">
     <div className="flex justify-between items-center">
-      {/* Logo - Make it clickable */}
-      <button
-        onClick={() => router.push("/")}
-        className="flex items-center space-x-4 hover:opacity-80 transition-opacity"
-      >
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+      <div className="flex items-center space-x-4">
+        {/* Only the logo icon is clickable */}
+        <button
+          onClick={() => router.push("/")}
+          className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center hover:opacity-90 transition-opacity"
+        >
           <DollarSign className="w-6 h-6 text-white" />
-        </div>
+        </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Expense Tracker</h1>
           <p className="text-gray-600 text-sm">Welcome back, {user?.name}</p>
         </div>
-      </button>
+      </div>
       
       <div className="flex items-center space-x-4">
         <button className="relative p-2 text-gray-600 hover:text-gray-900">
@@ -113,7 +113,6 @@ export default function DashboardLayout({
     </div>
   </div>
 </header>
-
       <div className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
