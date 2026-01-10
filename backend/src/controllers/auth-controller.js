@@ -1,10 +1,8 @@
 import { User } from "../model/user.js";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import {
-  sendPasswordResetEmail,
-  sendResetSuccessEmail,
+  
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "../resend/email.js";
@@ -205,71 +203,7 @@ export const logout = async (req, res) => {
 };
 
 
-/**
- * FORGOT PASSWORD
- */
-export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
 
-  try {
-    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
-
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpiresAt = Date.now() + 3600 * 1000;
-    await user.save();
-
-    await sendPasswordResetEmail(
-      user.email,
-      `${process.env.CLIENT_URL}/reset-password/${resetToken}`
-    );
-
-    return res.status(200).json({ success: true, message: "Password reset email sent" });
-  } catch (error) {
-    console.error("Forgot password error:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-/**
- * RESET PASSWORD
- */
-export const resetPassword = async (req, res) => {
-  const { token } = req.params;
-  const { password } = req.body;
-
-  try {
-    if (!token || !password)
-      return res.status(400).json({ success: false, message: "Token and password required" });
-
-    if (password.length < 6)
-      return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
-
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpiresAt: { $gt: Date.now() },
-    });
-
-    if (!user)
-      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
-
-    user.password = await bcrypt.hash(password, 10);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpiresAt = undefined;
-    await user.save();
-
-    await sendResetSuccessEmail(user.email);
-
-    return res.status(200).json({ success: true, message: "Password reset successfully" });
-  } catch (error) {
-    console.error("Reset password error:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
 
 
 // GET PROFILE

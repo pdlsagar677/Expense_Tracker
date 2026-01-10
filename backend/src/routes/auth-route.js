@@ -5,8 +5,6 @@ import {
   logout,
   signup,
   verifyEmail,
-  forgotPassword,
-  resetPassword,
   checkAuth,
   getProfileById,
   updateProfileById,
@@ -22,8 +20,7 @@ router.post("/verify-email", verifyEmail);
 router.get("/profile",authMiddleware, getProfileById);
 router.put("/profile",authMiddleware, updateProfileById);
 
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:token", resetPassword);
+
 router.put("/change-password",authMiddleware, changePassword);
 
 router.get("/check-auth", authMiddleware, checkAuth);
