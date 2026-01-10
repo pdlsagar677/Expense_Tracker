@@ -62,7 +62,6 @@ export default function DashboardLayout({
         { name: "Income", href: "/dashboard/income", icon: Wallet },
     { name: "Expenses", href: "/dashboard/expenses", icon: CreditCard },
     { name: "Profile", href: "/dashboard/profile", icon: User },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
   if (isCheckingAuth || !hasCheckedAuth) {
