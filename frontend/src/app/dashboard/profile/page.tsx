@@ -113,22 +113,23 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    try {
-      const updateData = {
-        name: formData.name,
-        phoneNumber: formData.phoneNumber,
-        age: formData.age,
-        gender: formData.gender
-      };
+  try {
+    const updateData = {
+      name: formData.name,
+      phoneNumber: formData.phoneNumber,
+      age: parseInt(formData.age), 
+      gender: formData.gender
+    };
 
-      await updateProfile(updateData);
-      setIsEditing(false);
-    } catch (err) {
-      console.error("Update error:", err);
-    }
-  };
+    await updateProfile(updateData);
+    setIsEditing(false);
+  } catch (err) {
+    console.error("Update error:", err);
+  }
+};
+
 
   const handleCancel = () => {
     if (user) {

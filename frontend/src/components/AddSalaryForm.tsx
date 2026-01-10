@@ -6,7 +6,12 @@ import { DollarSign, Calendar, FileText, CheckCircle, X } from "lucide-react";
 import Button from "./Button";
 import Input from "./Input";
 
-const AddSalaryForm = () => {
+// ✅ Added props interface for production fix
+interface AddSalaryFormProps {
+  onSuccess?: () => void | Promise<void>; // optional callback after salary added
+}
+
+const AddSalaryForm: React.FC<AddSalaryFormProps> = ({ onSuccess }) => {
   const [form, setForm] = useState({
     amount: "",
     month: "",
@@ -41,6 +46,9 @@ const AddSalaryForm = () => {
         month: "",
         notes: ""
       });
+
+      // ✅ Call onSuccess if provided
+      if (onSuccess) await onSuccess();
     }
   };
 
@@ -166,28 +174,23 @@ const AddSalaryForm = () => {
           <p className="text-xs text-gray-500 mt-2">Optional: Bonus details, deductions, or other notes</p>
         </div>
 
-      
-
         {/* Submit Button */}
-    
-       <div className="pt-4">
-  <Button
-    type="submit"
-    variant="primary"
-    fullWidth
-    isLoading={isLoading}
-    disabled={!isFormValid() || isLoading}
-    className="py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-  >
-    <span className="flex items-center justify-center gap-2">
-      <DollarSign size={18} />
-      Save Salary
-    </span>
-  </Button>
-</div>
+        <div className="pt-4">
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            isLoading={isLoading}
+            disabled={!isFormValid() || isLoading}
+            className="py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <DollarSign size={18} />
+              Save Salary
+            </span>
+          </Button>
+        </div>
       </form>
-
-     
     </div>
   );
 };
