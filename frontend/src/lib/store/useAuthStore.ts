@@ -53,9 +53,6 @@ interface AuthStore {
   updateProfile: (data: UpdateProfileData) => Promise<void>;
   changePassword: (data: ChangePasswordData) => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
-
-  forgotPassword: (email: string) => Promise<void>;
-  resetPassword: (token: string, password: string) => Promise<void>;
   clearError: () => void;
   clearMessage: () => void;
 }
@@ -206,24 +203,7 @@ export const useAuthStore = create<AuthStore>()(
       },
  
 
-      forgotPassword: async (email) => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data } = await API.post("/auth/forgot-password", { email });
-          set({
-            isLoading: false,
-            message: data.message || "Password reset email sent!",
-            hasCheckedAuth: true,
-          });
-        } catch (err: any) {
-          set({
-            isLoading: false,
-            error: err.response?.data?.message || err.message || "Failed to send reset email",
-            hasCheckedAuth: true,
-          });
-          throw err;
-        }
-      },
+     
       getProfile: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -268,25 +248,6 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
       
-
-      resetPassword: async (token, password) => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data } = await API.post(`/auth/reset-password/${token}`, { password });
-          set({
-            isLoading: false,
-            message: data.message || "Password reset successfully!",
-            hasCheckedAuth: true,
-          });
-        } catch (err: any) {
-          set({
-            isLoading: false,
-            error: err.response?.data?.message || err.message || "Password reset failed",
-            hasCheckedAuth: true,
-          });
-          throw err;
-        }
-      },
 
       deleteAccount: async (password) => {
   set({ isLoading: true, error: null, message: null });

@@ -136,12 +136,7 @@ export default function LoginPage() {
               </div>
               
               <div className="flex justify-end mt-2">
-                <Link 
-                  href="/forgot-password" 
-                  className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
-                >
-                  Forgot password?
-                </Link>
+             
               </div>
             </div>
 
@@ -213,12 +208,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {/* Demo Credentials (optional - remove in production) */}
-          <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-100">
-            <p className="text-xs text-blue-800 font-medium mb-1">Demo Credentials:</p>
-            <p className="text-xs text-blue-700">Email: demo@example.com</p>
-            <p className="text-xs text-blue-700">Password: demo123</p>
-          </div>
+          
         </div>
 
         {/* Footer */}
