@@ -6,10 +6,10 @@ import {
 
 export const sendVerificationEmail = async (email, verificationToken) => {
   try {
-    const resend = getResendClient(); // ✅ moved here
+    const resend = getResendClient(); 
 
     await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
+      from: "Expense Tracker <onboarding@resend.dev>",
       to: [email],
       subject: "Verify Your Email Address Now",
       html: verificationTokenEmailTemplate.replace(
@@ -28,7 +28,7 @@ export const sendWelcomeEmail = async (email, name) => {
     const resend = getResendClient(); // ✅
 
     await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
+      from: "Expense Tracker <onboarding@resend.dev>",
       to: [email],
       subject: "Welcome to our company",
       html: WELCOME_EMAIL_TEMPLATE.replace("{name}", name),
@@ -55,7 +55,7 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
 
 export const sendResetSuccessEmail = async (email) => {
   try {
-    const resend = getResendClient(); // ✅
+    const resend = getResendClient(); 
 
     await resend.emails.send({
       from: "Hacked <onboarding@resend.dev>",
