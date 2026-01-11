@@ -173,108 +173,108 @@ export default function ExpensesPage() {
       </div>
 
       {/* Add Expense Form */}
-      {showAddForm && (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Add New Expense</h3>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-red-800">Error</p>
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                <div className="flex items-center gap-2">
-                  <Tag size={16} />
-                  Expense Title
-                </div>
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleFormChange}
-                placeholder="e.g., Groceries, Rent, Transportation"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
-                <div className="flex items-center gap-2">
-                  <DollarSign size={16} />
-                  Amount
-                </div>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <input
-                  type="text"
-                  id="amount"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleAmountChange}
-                  placeholder="0.00"
-                  className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  required
-                />
-              </div>
-              {formData.amount && remainingSalary > 0 && (
-                <p className="text-sm text-gray-500 mt-2">
-                  Remaining after expense:{" "}
-                  <span className={`font-medium ${
-                    (remainingSalary - parseFloat(formData.amount)) >= 0 
-                      ? 'text-green-600' 
-                      : 'text-red-600'
-                  }`}>
-                    {formatCurrency(remainingSalary - parseFloat(formData.amount))}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-                <div className="flex items-center gap-2">
-                  <FileText size={16} />
-                  Notes (Optional)
-                </div>
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleFormChange}
-                placeholder="Add any additional details about this expense..."
-                rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
-              />
-            </div>
-
-            <div className="pt-4">
-              <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                isLoading={isLoading}
-                disabled={!formData.title || !formData.amount || isLoading || parseFloat(formData.amount) <= 0}
-                className="py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              >
-                {isLoading ? "Adding Expense..." : "Add Expense"}
-              </Button>
-            </div>
-          </form>
+{showAddForm && (
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+    <h3 className="text-lg font-semibold text-gray-900 mb-6">Add New Expense</h3>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-red-800">Error</p>
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
         </div>
       )}
+
+      <div>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="flex items-center gap-2">
+            <Tag size={16} />
+            Expense Title
+          </div>
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          value={formData.title}
+          onChange={handleFormChange}
+          placeholder="e.g., Groceries, Rent, Transportation"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder:text-gray-400"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="flex items-center gap-2">
+            <DollarSign size={16} />
+            Amount
+          </div>
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-500">$</span>
+          </div>
+          <input
+            type="text"
+            id="amount"
+            name="amount"
+            value={formData.amount}
+            onChange={handleAmountChange}
+            placeholder="0.00"
+            className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder:text-gray-400"
+            required
+          />
+        </div>
+        {formData.amount && remainingSalary > 0 && (
+          <p className="text-sm text-gray-500 mt-2">
+            Remaining after expense:{" "}
+            <span className={`font-medium ${
+              (remainingSalary - parseFloat(formData.amount)) >= 0 
+                ? 'text-green-600' 
+                : 'text-red-600'
+            }`}>
+              {formatCurrency(remainingSalary - parseFloat(formData.amount))}
+            </span>
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="flex items-center gap-2">
+            <FileText size={16} />
+            Notes (Optional)
+          </div>
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          value={formData.notes}
+          onChange={handleFormChange}
+          placeholder="Add any additional details about this expense..."
+          rows={3}
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none text-gray-900 placeholder:text-gray-400"
+        />
+      </div>
+
+      <div className="pt-4">
+        <Button
+          type="submit"
+          variant="primary"
+          fullWidth
+          isLoading={isLoading}
+          disabled={!formData.title || !formData.amount || isLoading || parseFloat(formData.amount) <= 0}
+          className="py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        >
+          {isLoading ? "Adding Expense..." : "Add Expense"}
+        </Button>
+      </div>
+    </form>
+  </div>
+)}
 
       {/* Expenses List */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
