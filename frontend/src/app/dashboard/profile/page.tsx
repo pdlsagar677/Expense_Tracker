@@ -263,14 +263,14 @@ export default function ProfilePage() {
             <div>
               <h2 className="text-2xl font-bold text-white">
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="bg-white/20 backdrop-blur-sm border-0 rounded-lg px-4 py-2 text-white placeholder-white/70 focus:ring-2 focus:ring-white focus:outline-none"
-                    placeholder="Enter your name"
-                  />
+                 <input
+  type="text"
+  name="name"
+  value={formData.name}
+  onChange={handleInputChange}
+  className="bg-white border border-white/30 rounded-lg px-4 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:outline-none"
+  placeholder="Enter your name"
+/>
                 ) : (
                   user?.name || "User Name"
                 )}
@@ -326,7 +326,7 @@ export default function ProfilePage() {
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
                   maxLength={10}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="bg-white border border-white/30 rounded-lg px-4 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:outline-none"
                   placeholder="10-digit phone number"
                 />
               ) : (
@@ -351,7 +351,7 @@ export default function ProfilePage() {
                   value={formData.age}
                   onChange={handleInputChange}
                   maxLength={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="bg-white border border-white/30 rounded-lg px-4 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:outline-none"
                   placeholder="Enter your age"
                 />
               ) : (
@@ -371,7 +371,7 @@ export default function ProfilePage() {
                   name="gender"
                   value={formData.gender}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  className="bg-white border border-white/30 rounded-lg px-4 py-2 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-white focus:outline-none"
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
