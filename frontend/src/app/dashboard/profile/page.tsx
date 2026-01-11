@@ -2,32 +2,32 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  User, 
-  Mail, 
-  Phone, 
+import {
+  User,
+  Mail,
+  Phone,
   Calendar,
   Edit2,
   Save,
   X,
   Shield,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import Button from "@/components/Button";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { 
-    user, 
-    isLoading, 
-    error, 
+  const {
+    user,
+    isLoading,
+    error,
     message,
     getProfile,
     updateProfile,
     clearError,
-    clearMessage
+    clearMessage,
   } = useAuthStore();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -35,7 +35,7 @@ export default function ProfilePage() {
     name: "",
     phoneNumber: "",
     age: "",
-    gender: ""
+    gender: "",
   });
 
   const [localError, setLocalError] = useState("");
@@ -46,27 +46,29 @@ export default function ProfilePage() {
         name: user.name,
         phoneNumber: user.phoneNumber,
         age: user.age.toString(),
-        gender: user.gender
+        gender: user.gender,
       });
     } else {
       getProfile();
     }
   }, [user]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    
-    if (name === 'phoneNumber' && !/^\d*$/.test(value)) {
-      return;
-    }
-    
-    if (name === 'age' && !/^\d*$/.test(value)) {
+
+    if (name === "phoneNumber" && !/^\d*$/.test(value)) {
       return;
     }
 
-    setFormData(prev => ({
+    if (name === "age" && !/^\d*$/.test(value)) {
+      return;
+    }
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -113,23 +115,22 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  try {
-    const updateData = {
-      name: formData.name,
-      phoneNumber: formData.phoneNumber,
-      age: parseInt(formData.age), 
-      gender: formData.gender
-    };
+    try {
+      const updateData = {
+        name: formData.name,
+        phoneNumber: formData.phoneNumber,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+      };
 
-    await updateProfile(updateData);
-    setIsEditing(false);
-  } catch (err) {
-    console.error("Update error:", err);
-  }
-};
-
+      await updateProfile(updateData);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Update error:", err);
+    }
+  };
 
   const handleCancel = () => {
     if (user) {
@@ -137,7 +138,7 @@ export default function ProfilePage() {
         name: user.name,
         phoneNumber: user.phoneNumber,
         age: user.age.toString(),
-        gender: user.gender
+        gender: user.gender,
       });
     }
     setIsEditing(false);
@@ -146,11 +147,11 @@ export default function ProfilePage() {
 
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     } catch {
       return dateString;
@@ -214,7 +215,10 @@ export default function ProfilePage() {
             <p className="text-sm font-medium text-red-800">Error</p>
             <p className="text-sm text-red-600">{error}</p>
           </div>
-          <button onClick={clearError} className="text-red-600 hover:text-red-800">
+          <button
+            onClick={clearError}
+            className="text-red-600 hover:text-red-800"
+          >
             ×
           </button>
         </div>
@@ -224,7 +228,9 @@ export default function ProfilePage() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-yellow-800">Validation Error</p>
+            <p className="text-sm font-medium text-yellow-800">
+              Validation Error
+            </p>
             <p className="text-sm text-yellow-600">{localError}</p>
           </div>
         </div>
@@ -237,7 +243,10 @@ export default function ProfilePage() {
             <p className="text-sm font-medium text-green-800">Success</p>
             <p className="text-sm text-green-600">{message}</p>
           </div>
-          <button onClick={clearMessage} className="text-green-600 hover:text-green-800">
+          <button
+            onClick={clearMessage}
+            className="text-green-600 hover:text-green-800"
+          >
             ×
           </button>
         </div>
@@ -279,11 +288,19 @@ export default function ProfilePage() {
           {/* Verification Status */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
             <div className="flex items-center gap-3">
-              <Shield className={`w-6 h-6 ${user?.isVerified ? 'text-green-600' : 'text-yellow-600'}`} />
+              <Shield
+                className={`w-6 h-6 ${
+                  user?.isVerified ? "text-green-600" : "text-yellow-600"
+                }`}
+              />
               <div>
                 <p className="font-medium text-gray-900">Account Status</p>
-                <p className={`text-sm ${user?.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {user?.isVerified ? 'Verified' : 'Not Verified'}
+                <p
+                  className={`text-sm ${
+                    user?.isVerified ? "text-green-600" : "text-yellow-600"
+                  }`}
+                >
+                  {user?.isVerified ? "Verified" : "Not Verified"}
                 </p>
               </div>
             </div>
@@ -314,7 +331,9 @@ export default function ProfilePage() {
                 />
               ) : (
                 <div className="px-4 py-3 bg-gray-50 rounded-xl">
-                  <p className="text-gray-900">{user?.phoneNumber || "Not provided"}</p>
+                  <p className="text-gray-900">
+                    {user?.phoneNumber || "Not provided"}
+                  </p>
                 </div>
               )}
             </div>
@@ -361,7 +380,9 @@ export default function ProfilePage() {
                 </select>
               ) : (
                 <div className="px-4 py-3 bg-gray-50 rounded-xl">
-                  <p className="text-gray-900 capitalize">{user?.gender || "Not provided"}</p>
+                  <p className="text-gray-900 capitalize">
+                    {user?.gender || "Not provided"}
+                  </p>
                 </div>
               )}
             </div>
@@ -381,10 +402,14 @@ export default function ProfilePage() {
 
           {/* Account Statistics (Optional - can add later) */}
           <div className="pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Account Information
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-xl">
-                <p className="text-2xl font-bold text-blue-600">{user?.age || 0}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {user?.age || 0}
+                </p>
                 <p className="text-sm text-gray-600">Age</p>
               </div>
               <div className="text-center p-4 bg-green-50 rounded-xl">
@@ -412,29 +437,27 @@ export default function ProfilePage() {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 pt-6">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-        >
+        <Button variant="outline" onClick={() => router.back()}>
           Go Back
         </Button>
         <Button
           onClick={() => {
             // Navigate to change password or other settings
-            router.push('/dashboard/profile/change-password');
+            router.push("/dashboard/profile/change-password");
           }}
         >
           Change Password
         </Button>
 
-
-         <Button
-          onClick={() => {
-            // Navigate to change password or other settings
-            router.push('/dashboard/profile/delete-account');
-          }}
-        >
-Delete Your Account        </Button>
+       <Button
+  onClick={() => {
+    router.push("/dashboard/profile/delete-account");
+  }}
+  className="bg-red-600 hover:bg-red-700 text-white border-red-700"
+  variant="outline"
+>
+  Delete Your Account
+</Button>
       </div>
     </div>
   );
