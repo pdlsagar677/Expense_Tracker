@@ -17,19 +17,19 @@ export const generateTokens = (userId) => {
 };
 
 export const attachTokenCookies = (res, accessToken, refreshToken) => {
-  const isProd = process.env.NODE_ENV === "production";
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: "strict",
-    maxAge: 15 * 60 * 1000, // 15m
-  });
+res.cookie("accessToken", accessToken, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",  
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  maxAge: 5*60 * 1000,
+});
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
-  });
+res.cookie("refreshToken", refreshToken, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
 };

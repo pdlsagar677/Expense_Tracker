@@ -2,96 +2,86 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ,
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Track if we're currently refreshing to avoid multiple refresh calls
+// ---- Token Refresh Handling ----
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: (() => void)[] = [];
 
-// Subscribe to token refresh
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
+// Subscribe requests while refresh is in progress
+const subscribeTokenRefresh = (cb: () => void) => {
   refreshSubscribers.push(cb);
 };
 
-// Notify all subscribers when token is refreshed
-const onTokenRefreshed = (token: string) => {
-  refreshSubscribers.forEach((cb) => cb(token));
+// Notify all subscribers after refresh
+const onTokenRefreshed = () => {
+  refreshSubscribers.forEach((cb) => cb());
   refreshSubscribers = [];
 };
 
-// Response interceptor to handle 401 errors
+// ---- Response Interceptor ----
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't tried to refresh yet
+    // If 401 and we haven't retried this request yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      
-      // If this is the refresh endpoint itself failing, don't retry
-      if (originalRequest.url?.includes('/auth/refresh')) {
-        isRefreshing = false;
-        // Clear auth state - user needs to log in again
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth-storage');
-          window.location.href = '/login';
-        }
-        return Promise.reject(error);
-      }
-
       originalRequest._retry = true;
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-
-        try {
-          // Try to refresh the token
-          await API.post('/auth/refresh');
-          
-          isRefreshing = false;
-          onTokenRefreshed('refreshed');
-
-          // Retry the original request
-          return API(originalRequest);
-        } catch (refreshError) {
-          isRefreshing = false;
-          
-          // Refresh failed - clear auth and redirect to login
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth-storage');
-            window.location.href = '/login';
-          }
-          
-          return Promise.reject(refreshError);
-        }
-      } else {
-        // If already refreshing, wait for it to complete
-        return new Promise((resolve) => {
+      // If already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
           subscribeTokenRefresh(() => {
-            resolve(API(originalRequest));
+            API(originalRequest).then(resolve).catch(reject);
           });
         });
       }
+
+      isRefreshing = true;
+
+      try {
+        // Call refresh endpoint (backend sets new cookies)
+        await API.post("/auth/refresh");
+
+        isRefreshing = false;
+        onTokenRefreshed();
+
+        // Small delay to ensure cookies propagate in browser
+        await new Promise((res) => setTimeout(res, 50));
+
+        // Retry original request
+        return API(originalRequest);
+      } catch (refreshError) {
+        isRefreshing = false;
+        onTokenRefreshed();
+
+        // Refresh failed → logout user
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-storage");
+          window.location.href = "/login";
+        }
+
+        return Promise.reject(refreshError);
+      }
     }
 
+    // Other errors
     return Promise.reject(error);
   }
 );
 
-// Request interceptor (optional - for debugging)
+// Optional: Request interceptor (for adding headers, logging, etc.)
 API.interceptors.request.use(
   (config) => {
-    // You can add additional headers here if needed
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default API;

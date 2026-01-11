@@ -152,29 +152,50 @@ export const useAuthStore = create<AuthStore>()(
           throw err;
         }
       },
+checkAuth: async () => {
+  const state = get();
+  if (state.isCheckingAuth || state.hasCheckedAuth) return;
 
-      checkAuth: async () => {
-        const state = get();
-        if (state.isCheckingAuth || state.hasCheckedAuth) return;
+  set({ isCheckingAuth: true, error: null });
 
-        set({ isCheckingAuth: true, error: null });
-        try {
-          const { data } = await API.get("/auth/check-auth");
-          set({
-            isAuthenticated: !!data.user,
-            user: data.user || null,
-            isCheckingAuth: false,
-            hasCheckedAuth: true,
-          });
-        } catch {
-          set({
-            isAuthenticated: false,
-            user: null,
-            isCheckingAuth: false,
-            hasCheckedAuth: true,
-          });
-        }
-      },
+  try {
+    const { data } = await API.get("/auth/check-auth");
+    set({
+      isAuthenticated: !!data.user,
+      user: data.user || null,
+      isCheckingAuth: false,
+      hasCheckedAuth: true,
+    });
+  } catch (err: any) {
+    if (err.response?.status === 401) {
+      // Try refresh token
+      try {
+        await API.post("/auth/refresh");
+        const { data } = await API.get("/auth/check-auth");
+        set({
+          isAuthenticated: !!data.user,
+          user: data.user || null,
+          isCheckingAuth: false,
+          hasCheckedAuth: true,
+        });
+      } catch {
+        // Refresh failed → logout user safely
+        await get().logout();
+      }
+    } else {
+      set({
+        isAuthenticated: false,
+        user: null,
+        isCheckingAuth: false,
+        hasCheckedAuth: true,
+        error: err.response?.data?.message || "Failed to check auth",
+      });
+    }
+  }
+},
+
+
+
 
       logout: async () => {
         set({ isLoading: true, error: null });

@@ -29,22 +29,21 @@ export default function DashboardLayout({
   const { user, logout, isAuthenticated, checkAuth, isCheckingAuth } = useAuthStore();
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  useEffect(() => {
-    const verifyAuth = async () => {
-      if (!hasCheckedAuth) {
-        await checkAuth();
-        setHasCheckedAuth(true);
-      }
-    };
-    
-    verifyAuth();
-  }, [checkAuth, hasCheckedAuth]);
-
-  useEffect(() => {
-    if (hasCheckedAuth && !isAuthenticated && !isCheckingAuth) {
-      router.push("/login");
+useEffect(() => {
+  const verifyAuth = async () => {
+    if (!hasCheckedAuth) {
+      await checkAuth();
+      setHasCheckedAuth(true);
     }
-  }, [isAuthenticated, hasCheckedAuth, isCheckingAuth, router]);
+  };
+  verifyAuth();
+}, [checkAuth, hasCheckedAuth]);
+
+useEffect(() => {
+  if (hasCheckedAuth && !isAuthenticated && !isCheckingAuth) {
+    router.push("/login");
+  }
+}, [isAuthenticated, hasCheckedAuth, isCheckingAuth, router]);
 
   const handleLogout = async () => {
     try {
