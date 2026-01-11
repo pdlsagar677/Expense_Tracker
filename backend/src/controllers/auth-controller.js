@@ -8,6 +8,7 @@ import {
 } from "../resend/email.js";
 import { generateVerificationToken } from "../utils/generateVerificationToken.js";
 import { generateTokens, attachTokenCookies } from "../utils/generateJWTToken.js";
+import { Salary } from "../model/salary.js";
 
 /**
  * SIGNUP
@@ -319,3 +320,48 @@ export const changePassword = async (req, res) => {
     });
   }
 };
+
+
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password) {
+      return res.status(400).json({ success: false, message: "Password is required" });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(403).json({ success: false, message: "Incorrect password" });
+    }
+
+    // Delete all Salary records (which include expenses and salaryAdditions) for this user
+    await Salary.deleteMany({ user: req.userId });
+
+    // Delete user
+    await User.findByIdAndDelete(req.userId);
+
+    // Clear cookies
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+
+    return res.status(200).json({
+      success: true,
+      message: "Account and all related data deleted successfully"
+    });
+
+  } catch (err) {
+    console.error("Delete account error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
+

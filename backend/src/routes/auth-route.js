@@ -9,8 +9,9 @@ import {
   getProfileById,
   updateProfileById,
   changePassword,
+  deleteAccount,
 } from "../controllers/auth-controller.js";
-import { authMiddleware } from "../middleware/auth-middleware.js"; // Use the new middleware
+import { authMiddleware } from "../middleware/auth-middleware.js"; 
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.post("/login", login);
 router.post("/verify-email", verifyEmail);
 router.get("/profile",authMiddleware, getProfileById);
 router.put("/profile",authMiddleware, updateProfileById);
+router.delete("/delete-account", authMiddleware, deleteAccount);
 
 
 router.put("/change-password",authMiddleware, changePassword);

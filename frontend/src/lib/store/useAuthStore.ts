@@ -52,6 +52,7 @@ interface AuthStore {
   getProfile: () => Promise<void>;
   updateProfile: (data: UpdateProfileData) => Promise<void>;
   changePassword: (data: ChangePasswordData) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
 
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -286,6 +287,35 @@ export const useAuthStore = create<AuthStore>()(
           throw err;
         }
       },
+
+      deleteAccount: async (password) => {
+  set({ isLoading: true, error: null, message: null });
+
+  try {
+    await API.delete("/auth/delete-account", {
+      data: { password }
+    });
+
+    const expenseStore = useExpenseStore.getState();
+    expenseStore.clearCache();
+    localStorage.removeItem("expense-storage");
+
+    set({
+      user: null,
+      isAuthenticated: false,
+      message: "Account deleted successfully",
+      isLoading: false
+    });
+
+  } catch (err: any) {
+    set({
+      isLoading: false,
+      error: err.response?.data?.message || "Failed to delete account"
+    });
+    throw err;
+  }
+},
+
 
       clearError: () => set({ error: null }),
       clearMessage: () => set({ message: null }),

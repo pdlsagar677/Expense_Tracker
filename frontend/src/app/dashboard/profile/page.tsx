@@ -426,6 +426,15 @@ export default function ProfilePage() {
         >
           Change Password
         </Button>
+
+
+         <Button
+          onClick={() => {
+            // Navigate to change password or other settings
+            router.push('/dashboard/profile/delete-account');
+          }}
+        >
+Delete Your Account        </Button>
       </div>
     </div>
   );
