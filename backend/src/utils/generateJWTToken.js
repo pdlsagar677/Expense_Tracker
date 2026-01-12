@@ -22,7 +22,7 @@ res.cookie("accessToken", accessToken, {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",  
   sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-  maxAge: 5*60 * 1000,
+  maxAge: 15*60 * 1000,
 });
 
 res.cookie("refreshToken", refreshToken, {
