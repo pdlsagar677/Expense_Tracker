@@ -23,6 +23,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 await connectToDatabase();
+app.get("/", (req, res) => {
+  res.send(" Expense Tracker Backend is running......Welcome to Expense Tracker ");
+});
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/salary", salaryRoutes);
