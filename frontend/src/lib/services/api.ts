@@ -2,12 +2,13 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
 
 // ---- Token Refresh Handling ----
 let isRefreshing = false;
