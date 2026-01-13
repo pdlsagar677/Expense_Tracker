@@ -17,7 +17,6 @@ export const generateTokens = (userId) => {
 };
 
 export const attachTokenCookies = (res, accessToken, refreshToken) => {
-  
   const cookieConfig = {
     httpOnly: true,
     secure: true, 
@@ -27,11 +26,11 @@ export const attachTokenCookies = (res, accessToken, refreshToken) => {
 
   res.cookie("accessToken", accessToken, {
     ...cookieConfig,
-    maxAge: 15 * 60 * 1000,
+    maxAge: 15 * 60 * 1000, 
   });
 
   res.cookie("refreshToken", refreshToken, {
     ...cookieConfig,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
   });
 };

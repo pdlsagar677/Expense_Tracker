@@ -11,14 +11,17 @@ import { connectToDatabase } from "./src/database/connectionToDatabase.js";
 const app = express();
 
 const PORT = process.env.PORT ;
+app.use(cookieParser());
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, 
-    credentials: true,
+    origin: process.env.FRONTEND_URL ,
+    credentials: true, 
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     exposedHeaders: ["Set-Cookie"],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   })
 );
 

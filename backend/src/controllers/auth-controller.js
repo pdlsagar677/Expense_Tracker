@@ -243,16 +243,17 @@ export const logout = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Logged out successfully",
+      message: "Logged out successfully"
     });
   } catch (error) {
     console.error("Logout error:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "Internal server error"
     });
   }
 };
+
 
 // GET PROFILE
 export const getProfileById = async (req, res) => {
@@ -387,25 +388,19 @@ export const changePassword = async (req, res) => {
 export const deleteAccount = async (req, res) => {
   try {
     const { password } = req.body;
-
+    
     if (!password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Password is required" });
+      return res.status(400).json({ success: false, message: "Password is required" });
     }
 
     const user = await User.findById(req.userId);
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Incorrect password" });
+      return res.status(403).json({ success: false, message: "Incorrect password" });
     }
 
     await Salary.deleteMany({ user: req.userId });
@@ -423,13 +418,13 @@ export const deleteAccount = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Account and all related data deleted successfully",
+      message: "Account and all related data deleted successfully"
     });
   } catch (err) {
     console.error("Delete account error:", err);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "Internal server error"
     });
   }
 };
