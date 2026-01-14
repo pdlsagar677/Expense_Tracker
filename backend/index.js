@@ -10,23 +10,28 @@ import { connectToDatabase } from "./src/database/connectionToDatabase.js";
 
 const app = express();
 
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT;
+
+// ← IMPORTANT: cookieParser BEFORE routes
 app.use(cookieParser());
 
+// ← UPDATED CORS Configuration
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
+      // Allow requests with no origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
         process.env.FRONTEND_URL,
-        
+        'http://localhost:3000',
+        'https://expense-tracker-kme2.vercel.app' // Your exact frontend URL
       ].filter(Boolean);
       
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn('❌ CORS blocked origin:', origin);
         callback(new Error('Not allowed by CORS'));
       }
     },
@@ -37,10 +42,9 @@ app.use(
   })
 );
 
-// Ensure OPTIONS requests are handled
+// Handle preflight requests
 app.options("*", cors());
 
-app.options("*", cors());
 const globalLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, 
   max: 300,
@@ -50,17 +54,15 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 app.use(express.json());
-app.use(cookieParser());
 
 await connectToDatabase();
-app.get("/", (req, res) => {
-  res.send(" Expense Tracker Backend is running......Welcome to Expense Tracker ");
-});
 
+app.get("/", (req, res) => {
+  res.send("Expense Tracker Backend is running......Welcome to Expense Tracker");
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/salary", salaryRoutes);
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

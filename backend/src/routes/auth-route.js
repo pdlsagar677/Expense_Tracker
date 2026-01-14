@@ -10,6 +10,7 @@ import {
   updateProfileById,
   changePassword,
   deleteAccount,
+  refresh,
 } from "../controllers/auth-controller.js";
 import { authMiddleware } from "../middleware/auth-middleware.js"; 
 
@@ -22,6 +23,7 @@ router.get("/profile",authMiddleware, getProfileById);
 router.put("/profile",authMiddleware, updateProfileById);
 router.delete("/delete-account", authMiddleware, deleteAccount);
 
+router.post("/refresh", refresh);
 
 router.put("/change-password",authMiddleware, changePassword);
 

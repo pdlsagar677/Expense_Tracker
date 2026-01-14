@@ -17,19 +17,19 @@ export const generateTokens = (userId) => {
 };
 
 export const attachTokenCookies = (res, accessToken, refreshToken) => {
-  // Determine if we're in production
   const isProduction = process.env.NODE_ENV === 'production';
   
   const cookieConfig = {
     httpOnly: true,
-    secure: true, // Always true (Vercel uses HTTPS)
-    sameSite: "none", // Required for cross-origin
+    secure: true,
+    sameSite: "none",
     path: "/",
-    // Add domain only in production if needed
-    ...(isProduction && process.env.COOKIE_DOMAIN && {
-      domain: process.env.COOKIE_DOMAIN
-    })
   };
+
+  // Log for debugging (remove after fixing)
+  console.log('🍪 Setting cookies in production:', isProduction);
+  console.log('🍪 Cookie config:', cookieConfig);
+  console.log('🍪 COOKIE_DOMAIN:', process.env.COOKIE_DOMAIN);
 
   res.cookie("accessToken", accessToken, {
     ...cookieConfig,
@@ -40,4 +40,6 @@ export const attachTokenCookies = (res, accessToken, refreshToken) => {
     ...cookieConfig,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
+  
+  console.log('✅ Cookies set successfully');
 };
