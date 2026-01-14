@@ -15,17 +15,14 @@ const PORT = process.env.PORT;
 // ← IMPORTANT: cookieParser BEFORE routes
 app.use(cookieParser());
 
-// ← UPDATED CORS Configuration
+// CORS Configuration
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
       
       const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'http://localhost:3000',
-        'https://expense-tracker-kme2.vercel.app' // Your exact frontend URL
+        process.env.FRONTEND_URL, 
       ].filter(Boolean);
       
       if (allowedOrigins.includes(origin)) {
@@ -41,8 +38,6 @@ app.use(
     exposedHeaders: ["Set-Cookie"],
   })
 );
-
-// Handle preflight requests
 app.options("*", cors());
 
 const globalLimiter = rateLimit({
