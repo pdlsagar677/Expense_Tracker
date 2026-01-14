@@ -17,20 +17,27 @@ export const generateTokens = (userId) => {
 };
 
 export const attachTokenCookies = (res, accessToken, refreshToken) => {
+  // Determine if we're in production
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   const cookieConfig = {
     httpOnly: true,
-    secure: true, 
-    sameSite: "none", 
+    secure: true, // Always true (Vercel uses HTTPS)
+    sameSite: "none", // Required for cross-origin
     path: "/",
+    // Add domain only in production if needed
+    ...(isProduction && process.env.COOKIE_DOMAIN && {
+      domain: process.env.COOKIE_DOMAIN
+    })
   };
 
   res.cookie("accessToken", accessToken, {
     ...cookieConfig,
-    maxAge: 15 * 60 * 1000, 
+    maxAge: 15 * 60 * 1000,
   });
 
   res.cookie("refreshToken", refreshToken, {
     ...cookieConfig,
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };

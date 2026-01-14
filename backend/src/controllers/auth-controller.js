@@ -231,11 +231,16 @@ export const checkAuth = async (req, res) => {
  */
 export const logout = async (req, res) => {
   try {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     const cookieConfig = {
       httpOnly: true,
       secure: true,
       sameSite: "none",
       path: "/",
+      ...(isProduction && process.env.COOKIE_DOMAIN && {
+        domain: process.env.COOKIE_DOMAIN
+      })
     };
 
     res.clearCookie("accessToken", cookieConfig);
@@ -253,7 +258,6 @@ export const logout = async (req, res) => {
     });
   }
 };
-
 
 // GET PROFILE
 export const getProfileById = async (req, res) => {
@@ -406,13 +410,17 @@ export const deleteAccount = async (req, res) => {
     await Salary.deleteMany({ user: req.userId });
     await User.findByIdAndDelete(req.userId);
 
-    const cookieConfig = {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-    };
+   const isProduction = process.env.NODE_ENV === 'production';
 
+const cookieConfig = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+  ...(isProduction && process.env.COOKIE_DOMAIN && {
+    domain: process.env.COOKIE_DOMAIN
+  })
+};
     res.clearCookie("accessToken", cookieConfig);
     res.clearCookie("refreshToken", cookieConfig);
 
