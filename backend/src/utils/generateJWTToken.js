@@ -15,14 +15,18 @@ export const generateTokens = (userId) => {
 export const attachTokenCookies = (res, accessToken, refreshToken) => {
   const isProduction = process.env.NODE_ENV === "production";
 
+  // Automatically extract hostname from FRONTEND_URL for production
+  const domain =
+    isProduction && process.env.FRONTEND_URL
+      ? new URL(process.env.FRONTEND_URL).hostname
+      : undefined;
+
   const cookieConfig = {
     httpOnly: true,
-    secure: isProduction, // HTTPS only
+    secure: isProduction, // HTTPS only in production
     sameSite: "none",     // cross-site cookies
     path: "/",
-    ...(isProduction && process.env.COOKIE_DOMAIN && {
-      domain: process.env.COOKIE_DOMAIN, // frontend domain
-    }),
+    ...(domain && { domain }),
   };
 
   res.cookie("accessToken", accessToken, {
@@ -35,3 +39,4 @@ export const attachTokenCookies = (res, accessToken, refreshToken) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
+
