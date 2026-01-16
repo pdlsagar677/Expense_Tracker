@@ -1,64 +1,55 @@
-import dotenv from "dotenv";
-dotenv.config();
-import rateLimit from "express-rate-limit";
 import express from "express";
+import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
+
 import authRoutes from "./src/routes/auth-route.js";
-import salaryRoutes from "./src/routes/salary-route.js"
+import salaryRoutes from "./src/routes/salary-route.js";
 import { connectToDatabase } from "./src/database/connectionToDatabase.js";
+
+dotenv.config();
 
 const app = express();
 
-const PORT = process.env.PORT;
-
-// ← IMPORTANT: cookieParser BEFORE routes
+// ----- MIDDLEWARE -----
 app.use(cookieParser());
 
-// CORS Configuration
+app.use(express.json());
+
+// ----- CORS -----
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      
-      const allowedOrigins = [
-        process.env.FRONTEND_URL, 
-      ].filter(Boolean);
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn('❌ CORS blocked origin:', origin);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
+    origin: process.env.FRONTEND_URL, // frontend domain
+    credentials: true, // allow cookies
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     exposedHeaders: ["Set-Cookie"],
   })
 );
-app.options("*", cors());
 
+// ----- RATE LIMIT -----
 const globalLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, 
+  windowMs: 10 * 60 * 1000, // 10 min
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use(globalLimiter);
 
-app.use(express.json());
-
+// ----- DATABASE -----
 await connectToDatabase();
 
+// ----- ROUTES -----
 app.get("/", (req, res) => {
-  res.send("Expense Tracker Backend is running......Welcome to Expense Tracker");
+  res.send("Expense Tracker Backend is running on Vercel!");
 });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/salary", salaryRoutes);
 
+// ----- START SERVER -----
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Backend running on port ${PORT}`);
 });
